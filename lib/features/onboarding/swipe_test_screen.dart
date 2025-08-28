@@ -95,7 +95,7 @@ class _SwipeTestScreenState extends State<SwipeTestScreen> {
                     ? null
                     : () => Navigator.of(
                       context,
-                    ).pushReplacementNamed(AppRoutes.home),
+                    ).pushReplacementNamed(AppRoutes.feed),
             child: const Text('건너뛰기'),
           ),
         ],

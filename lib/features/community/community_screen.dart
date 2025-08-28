@@ -46,44 +46,17 @@ class _CommunityPageState extends State<CommunityPage>
     'ESTJ',
   ];
 
-  // 원본 더미 데이터 (에셋 경로 그대로 유지)
-  final List<CommunityPost> allPosts = const [
-    CommunityPost(
-      images: ['assets/infp.jpg'],
-      mbti: 'INFP',
-      description: 'INFP',
-    ),
-    CommunityPost(
-      images: ['assets/entp.jpg'],
-      mbti: 'ENTP',
-      description: 'ENTP',
-    ),
-    CommunityPost(
-      images: ['assets/estj.jpg', 'assets/estj2.jpg'],
-      mbti: 'ESTJ',
-      description: 'ESTJ',
-    ),
-    CommunityPost(
-      images: ['assets/isfj.jpg'],
-      mbti: 'ISFJ',
-      description: 'ISFJ',
-    ),
-    CommunityPost(
-      images: ['assets/intj.jpg'],
-      mbti: 'INTJ',
-      description: 'INTJ',
-    ),
-  ];
+  // 기존 더미는 AppState에 시드됨. 여기서는 전역 posts를 그대로 사용
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    // MBTI 필터링
-    final List<CommunityPost> filtered =
-        (selectedMbti == null || selectedMbti == '전체')
-        ? allPosts
-        : allPosts.where((p) => p.mbti == selectedMbti).toList();
+    final app = context.app;
+    final List<Post> source = app.posts;
+    final List<Post> filtered = (selectedMbti == null || selectedMbti == '전체')
+        ? source
+        : source.where((p) => p.title.toUpperCase() == selectedMbti).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -136,61 +109,48 @@ class _CommunityPageState extends State<CommunityPage>
           ),
         ),
       ),
-      body: GridView.builder(
-        key: const PageStorageKey('community_grid'),
-        padding: const EdgeInsets.all(8),
+      body: ListView.separated(
+        key: const PageStorageKey('community_feed'),
+        padding: const EdgeInsets.only(bottom: 24),
         itemCount: filtered.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3, // 3열
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-        ),
+        separatorBuilder: (_, __) => const Divider(height: 1),
         itemBuilder: (context, index) {
-          final cp = filtered[index];
-
-          return GestureDetector(
-            onTap: () {
-              // ✅ 전역 상태(AppState)에 먼저 등록 → 저장/해제 등 상태 연동 가능
-              final app = context.app;
-              final newId = app.ensureExternalPost(
-                title: cp.mbti,
-                description: cp.description,
-                images: cp.images, // 에셋 경로 그대로 넘겨도 상세에서 처리됨
-              );
-              final Post post = app.posts.firstWhere((p) => p.id == newId);
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => PostDetailPage(post: post)),
-              );
-            },
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    cp.images.first,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (_, __, ___) => const ColoredBox(
-                      color: Color(0x11000000),
-                      child: Center(child: Icon(Icons.broken_image)),
+          final post = filtered[index];
+          final image = (post.images.isNotEmpty)
+              ? post.images.first
+              : (post.imageUrl ?? '');
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                title: Text(post.title),
+                subtitle: Text(post.createdAt.toLocal().toString()),
+              ),
+              if (image.isNotEmpty)
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PostDetailPage(post: post),
+                    ),
+                  ),
+                  child: AspectRatio(
+                    aspectRatio: 3 / 4,
+                    child: Image(
+                      image: image.startsWith('http')
+                          ? NetworkImage(image)
+                          : AssetImage(image) as ImageProvider,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                if (cp.images.length > 1)
-                  const Positioned(
-                    top: 4,
-                    right: 4,
-                    child: Icon(
-                      Icons.collections,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-              ],
-            ),
+              if ((post.description ?? '').isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(post.description!),
+                ),
+              const SizedBox(height: 12),
+            ],
           );
         },
       ),
@@ -210,3 +170,4 @@ class CommunityPost {
     required this.description,
   });
 }
+

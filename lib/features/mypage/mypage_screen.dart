@@ -72,8 +72,8 @@ class _MyPageState extends State<MyPage> {
             const CircleAvatar(
               radius: 48,
               backgroundImage: AssetImage(
-                'assets/avatar.png',
-              ), // 너가 준비한 이미지로 교체
+                'assets/style1.jpg',
+              ), // 존재하는 에셋으로 교체
             ),
             if (isEditingProfile)
               const Positioned(

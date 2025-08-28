@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
           final completed = (me['profileCompleted'] == true);
           if (!mounted) return;
           Navigator.of(context).pushNamedAndRemoveUntil(
-            completed ? AppRoutes.home : AppRoutes.onboarding,
+            completed ? AppRoutes.feed : AppRoutes.onboarding,
             (route) => false,
           );
           return;
@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (!mounted) return;
           Navigator.of(
             context,
-          ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+          ).pushNamedAndRemoveUntil(AppRoutes.feed, (route) => false);
           return;
         }
       } catch (e) {

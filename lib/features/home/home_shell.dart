@@ -6,14 +6,15 @@ import '../saved/saved_screen.dart';
 import '../mypage/mypage_screen.dart';
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  final int initialIndex;
+  const HomeShell({super.key, this.initialIndex = 0});
 
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _index = 0;
+  late int _index = widget.initialIndex;
 
   final _tabs = const <Widget>[
     HomeFeedScreen(), // 피드
@@ -29,7 +30,27 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(index: _index, children: _tabs),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: (i) {
+          setState(() => _index = i);
+          // URL 동기화
+          switch (i) {
+            case 0:
+              Navigator.of(context).pushReplacementNamed('/feed');
+              break;
+            case 1:
+              Navigator.of(context).pushReplacementNamed('/community');
+              break;
+            case 2:
+              Navigator.of(context).pushReplacementNamed('/upload');
+              break;
+            case 3:
+              Navigator.of(context).pushReplacementNamed('/saved');
+              break;
+            case 4:
+              Navigator.of(context).pushReplacementNamed('/mypage');
+              break;
+          }
+        },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: '홈'),
           NavigationDestination(
