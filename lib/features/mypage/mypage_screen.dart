@@ -18,6 +18,7 @@ class _MyPageState extends State<MyPage> {
   };
 
   // 샘플 게시물(assets 등록 필요)
+
   final List<String> posts = [
     'assets/feed_style1.jpg',
     'assets/feed_style2.jpg',
