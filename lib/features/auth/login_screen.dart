@@ -35,12 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // 신규 유저 → 스와이프 페이지로 이동
+        // 신규 유저 → 온보딩 업로드 화면으로 이동
         if (res.isNewUser) {
           if (!mounted) return;
           Navigator.of(
             context,
-          ).pushNamedAndRemoveUntil(AppRoutes.Swipe, (route) => false);
+          ).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
           return;
         }
 
@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
           final completed = (me['profileCompleted'] == true);
           if (!mounted) return;
           Navigator.of(context).pushNamedAndRemoveUntil(
-            AppRoutes.Swipe,
+            AppRoutes.onboarding,
             (route) => false,
           );
           return;
@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (!mounted) return;
           Navigator.of(
             context,
-          ).pushNamedAndRemoveUntil(AppRoutes.Swipe, (route) => false);
+          ).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
           return;
         }
       } catch (e) {
@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      backgroundColor: Colors.white,
       body: SafeArea(
         // 웹은 상/하 여백을 꺼서 진짜 중앙 배치
         top: !kIsWeb,

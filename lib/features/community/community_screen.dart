@@ -104,7 +104,7 @@ class _CommunityPageState extends State<CommunityPage>
                             },
                           ),
                     filled: true,
-                    fillColor: Colors.grey[200],
+                    fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(28),
                       borderSide: BorderSide.none,

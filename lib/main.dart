@@ -12,12 +12,29 @@ class OmakaseApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: '옷마카세',
-      initialRoute: AppRoutes.login,
-      routes: AppRouter.routes, // ✅ Navigator 라우팅 사용
-      theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
+    final appState = AppState()..seedCommunityAssetsIfEmpty();
+    return AppStateScope(
+      notifier: appState,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: '옷마카세',
+        initialRoute: AppRoutes.login,
+        routes: AppRouter.routes, // ✅ Navigator 라우팅 사용
+        theme: ThemeData(
+          colorSchemeSeed: Colors.blue,
+          useMaterial3: true,
+          scaffoldBackgroundColor: Colors.white,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            foregroundColor: Colors.black,
+          ),
+          navigationBarTheme: const NavigationBarThemeData(
+            backgroundColor: Colors.white,
+          ),
+        ),
+      ),
     );
   }
 }
