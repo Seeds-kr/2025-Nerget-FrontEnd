@@ -7,7 +7,8 @@ import '../mypage/mypage_screen.dart';
 
 class HomeShell extends StatefulWidget {
   final int initialIndex;
-  const HomeShell({super.key, this.initialIndex = 0});
+  final int feedInitialTabIndex;
+  const HomeShell({super.key, this.initialIndex = 0, this.feedInitialTabIndex = 0});
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -16,12 +17,12 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   late int _index = widget.initialIndex;
 
-  final _tabs = <Widget>[
-    const HomeFeedScreen(), // 기본은 0
-    CommunityPage(), // 커뮤니티
-    UploadStyleScreen(), // 업로드(탭에서 바로 업로드)
-    SavedScreen(), // 저장됨
-    MyPage(), // 마이페이지
+  List<Widget> get _tabs => <Widget>[
+    HomeFeedScreen(initialTabIndex: widget.feedInitialTabIndex),
+    const CommunityPage(),
+    const UploadStyleScreen(),
+    const SavedScreen(),
+    const MyPage(),
   ];
 
   @override
