@@ -16,8 +16,8 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   late int _index = widget.initialIndex;
 
-  final _tabs = const <Widget>[
-    HomeFeedScreen(), // 피드
+  final _tabs = <Widget>[
+    const HomeFeedScreen(), // 기본은 0
     CommunityPage(), // 커뮤니티
     UploadStyleScreen(), // 업로드(탭에서 바로 업로드)
     SavedScreen(), // 저장됨
