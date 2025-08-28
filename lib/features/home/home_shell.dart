@@ -7,7 +7,8 @@ import '../mypage/mypage_screen.dart';
 
 class HomeShell extends StatefulWidget {
   final int initialIndex;
-  const HomeShell({super.key, this.initialIndex = 0});
+  final int feedInitialTabIndex;
+  const HomeShell({super.key, this.initialIndex = 0, this.feedInitialTabIndex = 0});
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -16,12 +17,12 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   late int _index = widget.initialIndex;
 
-  final _tabs = const <Widget>[
-    HomeFeedScreen(), // 피드
-    CommunityPage(), // 커뮤니티
-    UploadStyleScreen(), // 업로드(탭에서 바로 업로드)
-    SavedScreen(), // 저장됨
-    MyPage(), // 마이페이지
+  List<Widget> get _tabs => <Widget>[
+    HomeFeedScreen(initialTabIndex: widget.feedInitialTabIndex),
+    const CommunityPage(),
+    const UploadStyleScreen(),
+    const SavedScreen(),
+    const MyPage(),
   ];
 
   @override
@@ -37,7 +38,27 @@ class _HomeShellState extends State<HomeShell> {
             backgroundColor: Colors.white,
             indicatorColor: Colors.transparent,
             selectedIndex: _index,
-            onDestinationSelected: (i) => setState(() => _index = i),
+            onDestinationSelected: (i) {
+              setState(() => _index = i);
+              // URL 동기화 (웹에서 주소 해시 변경)
+              switch (i) {
+                case 0:
+                  Navigator.of(context).pushReplacementNamed('/feed');
+                  break;
+                case 1:
+                  Navigator.of(context).pushReplacementNamed('/community');
+                  break;
+                case 2:
+                  Navigator.of(context).pushReplacementNamed('/upload');
+                  break;
+                case 3:
+                  Navigator.of(context).pushReplacementNamed('/saved');
+                  break;
+                case 4:
+                  Navigator.of(context).pushReplacementNamed('/mypage');
+                  break;
+              }
+            },
             destinations: const [
               NavigationDestination(icon: Icon(Icons.home_outlined), label: 'home'),
               NavigationDestination(icon: Icon(Icons.people_outline), label: 'community'),

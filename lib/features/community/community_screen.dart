@@ -182,6 +182,17 @@ class _CommunityPageState extends State<CommunityPage>
               ListTile(
                 title: Text(post.title),
                 subtitle: Text(post.createdAt.toLocal().toString()),
+                trailing: IconButton(
+                  tooltip: post.saved ? '저장 취소' : '저장',
+                  icon: Icon(post.saved ? Icons.bookmark : Icons.bookmark_border),
+                  onPressed: () {
+                    context.app.toggleSave(post.id);
+                    setState(() {});
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(post.saved ? '저장을 취소했어요' : '저장했어요')),
+                    );
+                  },
+                ),
               ),
               if (image.isNotEmpty)
                 GestureDetector(

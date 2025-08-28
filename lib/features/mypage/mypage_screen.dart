@@ -18,7 +18,20 @@ class _MyPageState extends State<MyPage> {
   };
 
   // 샘플 게시물(assets 등록 필요)
-  final List<String> posts = ['assets/feed_style8.jpg'];
+feature/upload
+
+  final List<String> posts = [
+    'assets/feed_style1.jpg',
+    'assets/feed_style2.jpg',
+    'assets/feed_style3.jpg',
+    'assets/feed_style4.jpg',
+    'assets/feed_style5.jpg',
+    'assets/feed_style6.jpg',
+    'assets/feed_style7.jpg',
+    'assets/feed_style8.jpg',
+    'assets/feed_style9.jpg',
+  ];
+dev
 
   @override
   Widget build(BuildContext context) {

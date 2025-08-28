@@ -4,7 +4,8 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../router/app_router.dart';
 
 class HomeFeedScreen extends StatelessWidget {
-  const HomeFeedScreen({super.key});
+  final int initialTabIndex;
+  const HomeFeedScreen({super.key, this.initialTabIndex = 0});
 
   Future<void> _signOut(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -18,8 +19,10 @@ class HomeFeedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final safeIndex = initialTabIndex.clamp(0, 2);
     return DefaultTabController(
       length: 3,
+      initialIndex: safeIndex,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Home'),

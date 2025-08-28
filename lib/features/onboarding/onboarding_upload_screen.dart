@@ -82,14 +82,9 @@ class _OnboardingUploadScreenState extends State<OnboardingUploadScreen> {
   // 업로드 후 다음 단계로
   Future<void> _handleUploadAndNext() async {
     if (_uploading) return;
-    final ok = await _uploadImages();
-    if (!ok || !mounted) return;
-
-    // Navigator 1.0
+    // 업로드 절차 없이 바로 이동
+    if (!mounted) return;
     Navigator.of(context).pushReplacementNamed(_nextRoute);
-
-    // go_router 사용 시:
-    // context.go(_nextRoute);
   }
 
   // 스킵 → 바로 스와이프
