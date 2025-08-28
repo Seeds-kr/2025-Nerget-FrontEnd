@@ -17,10 +17,10 @@ class _HomeShellState extends State<HomeShell> {
 
   final _tabs = const <Widget>[
     HomeFeedScreen(), // 피드
-    CommunityScreen(), // 커뮤니티
+    CommunityPage(), // 커뮤니티
     UploadStyleScreen(), // 업로드(탭에서 바로 업로드)
     SavedScreen(), // 저장됨
-    MyPageScreen(), // 마이페이지
+    MyPage(), // 마이페이지
   ];
 
   @override

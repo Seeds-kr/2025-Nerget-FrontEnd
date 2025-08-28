@@ -1,17 +1,31 @@
 {
   "authGoogle": {
-    "firstLogin": false,
-    "mbti": "SN",
-    "accessToken": "dummyAccess",
-    "refreshToken": "dummyRefresh"
+    "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjE0OTljMTU0Y2NjOGEyNWUyNGQ4ZGU4YjFhOWY4NDVhZWZiNmYzY2EiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxMDc2NTA3MzM2OTk1LXVvNGI4M25zampjMjRyY290NzE1NDZsbnRlYmlmcDVrLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMTA3NjUwNzMzNjk5NS11bzRiODNuc2pqYzI0cmNvdDcxNTQ2bG50ZWJpZnA1ay5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEwMTkxMjUxMzIxNDg0OTY4OTY0OSIsImVtYWlsIjoibW1zczA3MDZAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5iZiI6MTc1NjM4MjczNywibmFtZSI6Iuq5gOuvvOyEsSIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NLUHhuamhqLWhwdDQ1RDBfMmlpOFAxWm1uUXpFRlVyLVJVY2c1bWdkSE1yeV9YTFE9czk2LWMiLCJnaXZlbl9uYW1lIjoi66-87ISxIiwiZmFtaWx5X25hbWUiOiLquYAiLCJpYXQiOjE3NTYzODMwMzcsImV4cCI6MTc1NjM4NjYzNywianRpIjoiODJkZjcwODkzZWJhOGUzMWRiNzA1ZTQyYmE4YWI0ZDdlNWM1ZmRjMCJ9.r8VFPx67II5gpNdwUOtmpaJsjlQbh-SQ1wfWq29KxV4VmtwQpo68GIupXp29j6jz-pN1AoLqRXT13ienOmRpoDi-Y7JlfJBlm0uUPsdbXpAeLRtaKCN7eLD_mTuGSIvm-H2VzepWrm3jMoOW3-D4ssWu1S8DmdAs-kdDswG14KUSljCmpoNpwLT4qUfF54IyBb6rv5z6t0gPk3XSGhmppEzEq0_4cYch95UAnBMuj_cOULN6Hr1DEO5jse7Kss4DEaYpvoGT472pCJtRGophi3SObFodiZcCaESSiBKK7BsS86nT0WcPAzQR_FqGn0_9rLkjh5LShAA8qjvpx4mBHg"
   },
   "home": {
     "items": [
-      { "id": 1, "imageUrl": "https://picsum.photos/400", "tags": ["street", "black"] },
-      { "id": 2, "imageUrl": "https://picsum.photos/401", "tags": ["minimal", "white"] }
+      {
+        "id": 1,
+        "imageUrl": "https://picsum.photos/400",
+        "tags": [
+          "street",
+          "black"
+        ]
+      },
+      {
+        "id": 2,
+        "imageUrl": "https://picsum.photos/401",
+        "tags": [
+          "minimal",
+          "white"
+        ]
+      }
     ],
     "page": 0,
     "hasNext": true
   },
-  "profileMbti": { "saved": true, "mbti": "SN" }
+  "profileMbti": {
+    "saved": true,
+    "mbti": "SN"
+  }
 }
