@@ -10,7 +10,7 @@ class UploadStyleScreen extends StatelessWidget {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(PrefKeys.profileCompleted, true);
     if (!context.mounted) return;
-    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    Navigator.of(context).pushReplacementNamed(AppRoutes.feed);
   }
 
   @override

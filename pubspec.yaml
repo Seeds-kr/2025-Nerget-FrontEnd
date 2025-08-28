@@ -46,6 +46,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_staggered_grid_view: ^0.7.0
 
 dev_dependencies:
   flutter_test:
@@ -73,16 +74,28 @@ flutter:
     - assets/google_logo.png
     - assets/Kakao.jpg  
     - assets/Naver.png
-    - assets/style1.jpg
-    - assets/style2.jpg
-    - assets/style3.jpg
-    - assets/style4.jpg
-    - assets/style5.jpg 
-    - assets/style6.jpg
-    - assets/style7.jpg
-    - assets/style8.jpg
-    - assets/omakase.png
+    - assets/feed_style1.jpg
+    - assets/feed_style2.jpg
+    - assets/feed_style3.jpg
+    - assets/feed_style4.jpg
+    - assets/feed_style5.jpg 
+    - assets/feed_style6.jpg
+    - assets/feed_style7.jpg
+    - assets/feed_style8.jpg
+    - assets/feed_style9.jpg
+    - assets/feed_style10.jpg
+    - assets/feed_style11.jpg
+    - assets/feed_style12.jpg
+    - assets/feed_style13.jpg
+    - assets/feed_style14.jpg
+    - assets/feed_style15.jpg
+    - assets/feed_style16.jpg
+    - assets/feed_style17.jpg
+    - assets/feed_style18.jpg
+    - assets/feed_style19.jpg
+    - assets/feed_style20.jpg
     
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

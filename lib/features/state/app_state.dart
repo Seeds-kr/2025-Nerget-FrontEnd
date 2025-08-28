@@ -108,6 +108,45 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     return id;
   }
+
+  /// 커뮤니티 샘플 에셋으로 초기 시드 (이미 데이터가 있으면 스킵)
+  void seedCommunityAssetsIfEmpty() {
+    if (_posts.isNotEmpty) return;
+    final samples = <Map<String, dynamic>>[
+      {
+        'title': 'INFP',
+        'images': ['assets/style1.jpg'],
+        'description': 'INFP',
+      },
+      {
+        'title': 'ENTP',
+        'images': ['assets/style2.jpg'],
+        'description': 'ENTP',
+      },
+      {
+        'title': 'ESTJ',
+        'images': ['assets/style3.jpg', 'assets/style4.jpg'],
+        'description': 'ESTJ',
+      },
+      {
+        'title': 'ISFJ',
+        'images': ['assets/style5.jpg'],
+        'description': 'ISFJ',
+      },
+      {
+        'title': 'INTJ',
+        'images': ['assets/style6.jpg'],
+        'description': 'INTJ',
+      },
+    ];
+    for (final s in samples) {
+      ensureExternalPost(
+        title: s['title'] as String,
+        description: s['description'] as String?,
+        images: (s['images'] as List).cast<String>(),
+      );
+    }
+  }
 }
 
 // 전역 상태 공유용 InheritedNotifier
