@@ -10,11 +10,11 @@ class MyPage extends StatefulWidget {
 class _MyPageState extends State<MyPage> {
   // 프로필/통계
   final Map<String, dynamic> profile = {
-    'name': 'omakase',
-    'username': '@omakase',
-    'bio': 'Hi! I’m omakase😉\nWelcome to my page.',
-    'followers': 200,
-    'following': 200,
+    'name': 'helena',
+    'username': '@helena',
+    'bio': 'Hi! I’m helena😉\nWelcome to my page.',
+    'followers': 57,
+    'following': 57,
   };
 
   // 샘플 게시물(assets 등록 필요)
