@@ -66,10 +66,7 @@ class _SwipeTestScreenState extends State<SwipeTestScreen> {
         // await StyleApi().sendSwipe(itemId: itemId, liked: liked);
       }
     } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('전송 실패(오프라인 또는 서버 오류)')));
+      // 전송 실패 시 UI 알림 없이 무시 (조용히 실패 처리)
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -343,7 +340,10 @@ class _SwipeResultView extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
-                    builder: (_) => const HomeShell(initialIndex: 0),
+                    builder: (_) => const HomeShell(
+                      initialIndex: 0,
+                      feedInitialTabIndex: 1, // For you 탭 선택
+                    ),
                     settings: const RouteSettings(name: AppRoutes.feed),
                   ),
                 );
