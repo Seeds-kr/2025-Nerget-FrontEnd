@@ -28,9 +28,23 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) {
+      bottomNavigationBar: NavigationBarTheme(
+        data: const NavigationBarThemeData(
+          height: 64,
+          indicatorColor: Colors.transparent, // 인디케이터 숨김 (이미지 스타일 유사)
+          labelTextStyle: MaterialStatePropertyAll(
+            TextStyle(
+              fontSize: 11,
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        child: NavigationBar(
+          backgroundColor: Colors.white,
+          elevation: 8,
+          selectedIndex: _index,
+          onDestinationSelected: (i) {
           setState(() => _index = i);
           // URL 동기화
           switch (i) {
@@ -51,22 +65,50 @@ class _HomeShellState extends State<HomeShell> {
               break;
           }
         },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: '홈'),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            label: '커뮤니티',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.add_circle_outline),
-            label: '업로드',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bookmark_outline),
-            label: '저장',
-          ),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: '마이'),
-        ],
+          destinations: const [
+            NavigationDestination(
+              icon: Badge(
+                smallSize: 6,
+                backgroundColor: Colors.red,
+                child: Icon(Icons.home_outlined),
+              ),
+              selectedIcon: Badge(
+                smallSize: 6,
+                backgroundColor: Colors.red,
+                child: Icon(Icons.home),
+              ),
+              label: 'HOME',
+            ),
+            NavigationDestination(
+              icon: Badge(
+                smallSize: 6,
+                backgroundColor: Colors.red,
+                child: Icon(Icons.people_outline),
+              ),
+              selectedIcon: Badge(
+                smallSize: 6,
+                backgroundColor: Colors.red,
+                child: Icon(Icons.people),
+              ),
+              label: 'COMMUNITY',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.add_circle_outline),
+              selectedIcon: Icon(Icons.add_circle),
+              label: 'UPLOAD',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bookmark_outline),
+              selectedIcon: Icon(Icons.bookmark),
+              label: 'SAVED',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
+              label: 'MY',
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -25,6 +25,8 @@ class _CommunityPageState extends State<CommunityPage>
   bool get wantKeepAlive => true;
 
   String? selectedMbti; // null이면 '전체'
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   static const List<String> mbtiList = [
     '전체',
@@ -49,63 +51,118 @@ class _CommunityPageState extends State<CommunityPage>
   // 기존 더미는 AppState에 시드됨. 여기서는 전역 posts를 그대로 사용
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
 
     final app = context.app;
     final List<Post> source = app.posts;
-    final List<Post> filtered = (selectedMbti == null || selectedMbti == '전체')
-        ? source
-        : source.where((p) => p.title.toUpperCase() == selectedMbti).toList();
+    final List<Post> byMbti =
+        (selectedMbti == null || selectedMbti == '전체')
+            ? source
+            : source
+                .where((p) => p.title.toUpperCase() == selectedMbti)
+                .toList();
+
+    final query = _searchQuery.trim().toLowerCase();
+    final List<Post> filtered = query.isEmpty
+        ? byMbti
+        : byMbti.where((p) {
+            final t = p.title.toLowerCase();
+            final d = (p.description ?? '').toLowerCase();
+            return t.contains(query) || d.contains(query);
+          }).toList();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Community'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: SizedBox(
-            height: 56,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              itemCount: mbtiList.length,
-              itemBuilder: (context, index) {
-                final mbti = mbtiList[index];
-                final bool isSelected = (selectedMbti ?? '전체') == mbti;
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: ChoiceChip(
-                    label: Text(
-                      mbti,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : Colors.black,
-                      ),
+          preferredSize: const Size.fromHeight(108),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: '검색어를 입력하세요',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          ),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(28),
+                      borderSide: BorderSide.none,
                     ),
-                    selected: isSelected,
-                    onSelected: (_) {
-                      setState(() {
-                        selectedMbti = (mbti == '전체')
-                            ? null
-                            : (isSelected ? null : mbti);
-                      });
-                    },
-                    selectedColor: Colors.blueAccent,
-                    backgroundColor: Colors.grey[200],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: isSelected
-                            ? Colors.blueAccent
-                            : (Colors.grey[300]!),
-                      ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 0,
                     ),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              SizedBox(
+                height: 56,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  itemCount: mbtiList.length,
+                  itemBuilder: (context, index) {
+                    final mbti = mbtiList[index];
+                    final bool isSelected = (selectedMbti ?? '전체') == mbti;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: ChoiceChip(
+                        label: Text(
+                          mbti,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        selected: isSelected,
+                        onSelected: (_) {
+                          setState(() {
+                            selectedMbti = (mbti == '전체')
+                                ? null
+                                : (isSelected ? null : mbti);
+                          });
+                        },
+                        selectedColor: Colors.blueAccent,
+                        backgroundColor: Colors.grey[200],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: isSelected
+                                ? Colors.blueAccent
+                                : (Colors.grey[300]!),
+                          ),
+                        ),
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
