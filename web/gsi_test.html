@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Google Sign-In Pure Test</title>
+</head>
+<body>
+  <h3> Google 로그인 순수 테스트 페이지 </h3>
+  <p> 이 페이지에서 로그인 버튼이 보이고 작동하면, 문제는 Flutter와 구글 스크립트의 상호작용에 있습니다.</p>
+  <p> 여기서도 실패하면, 문제는 100% 브라우저 환경(확장 프로그램, 설정 등) 또는 Google Cloud 설정에 있습니다.</p>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <div id="g_id_onload"
+       data-client_id="1076507336995-uo4b83nsjjc24rcot71546lntebifp5k.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse">
+  </div>
+  
+  <div class="g_id_signin" data-type="standard"></div>
+
+  <script>
+    function handleCredentialResponse(response) {
+      console.log("성공! ID Token: " + response.credential);
+      alert("로그인 성공! 개발자 도구 Console을 확인하세요.");
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+  "/api/auth/google": "/authGoogle",
+  "/api/home": "/home",
+  "/api/profile/mbti": "/profileMbti"
+}

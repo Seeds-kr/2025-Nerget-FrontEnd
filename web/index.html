@@ -1,38 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
-
   <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta content="IE-Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="omakase_app">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>omakase_app</title>
+  <title>옷마카세</title>
+  
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="manifest" href="manifest.json">
 </head>
-<body>
-  <script src="flutter_bootstrap.js" async></script>
+<body>  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
+<!--<!DOCTYPE html>
+<html>
+<head>
+  <title>Google Sign-In Test</title>
+</head>
+<body>
+  <h3>Google 로그인 순수 테스트 페이지</h3>
+  <p>이 페이지에서 로그인이 성공하면, 문제는 Flutter 프로젝트 내부에 있습니다.</p>
+  <p>여기서도 실패하면, 문제는 Google Cloud 설정이나 네트워크 환경에 있습니다.</p>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <div id="g_id_onload"
+       data-client_id="1076507336995-5iru9ctq7n06th5ei0tt96ceuvt60umq.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse">
+  </div>
+  <div class="g_id_signin" data-type="standard"></div>
+
+  <script>
+    function handleCredentialResponse(response) {
+      console.log("성공! ID Token: " + response.credential);
+      alert("로그인 성공! 개발자 도구 Console을 확인하세요.");
+    }
+  </script>
+
+</body>
+</html>-->
+<!-- 이 코드는 위에 로그인 재대로 확인되기 위한 확인 코드입니다. 이 코드를 활성화 시키고 
+ 우클릭으로 lIve Server 킨 다음에 확인하면 됨. -->
