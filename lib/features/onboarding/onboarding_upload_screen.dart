@@ -1,233 +1,316 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
-import 'package:omakase_app/features/onboarding/swipe_test_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:omakase_app/router/app_router.dart';
-import '../../shared/api/style_api.dart';
-import 'package:omakase_app/shared/api/prefs.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:omakase_app/shared/api/api_client.dart';
 import 'package:omakase_app/shared/api/env.dart' as appenv;
 
 class OnboardingUploadScreen extends StatefulWidget {
   const OnboardingUploadScreen({super.key});
+
   @override
   State<OnboardingUploadScreen> createState() => _OnboardingUploadScreenState();
 }
 
 class _OnboardingUploadScreenState extends State<OnboardingUploadScreen> {
-  final Dio _mockDio = Dio(
-    BaseOptions(
-      baseUrl: appenv.Env.apiBaseUrl(),
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
+  // ▶ 스와이프 화면 라우트명: 프로젝트에 맞게 바꿔도 됨
+  static const String _nextRoute = '/swipe';
 
-  final _api = StyleApi();
-  bool _loading = false;
-  List<PlatformFile> _files = [];
+  final Dio _dio = Dio();
+  final List<PlatformFile> _files = [];
+  bool _uploading = false;
 
-  Future<List<String>> _encodeSelectedImagesB64() async {
-    final result = <String>[];
-
-    for (final f in _files) {
-      // FilePicker PlatformFile(bytes) 우선 사용
-      final dynamic maybeBytes = (f as dynamic).bytes;
-      if (maybeBytes is List<int>) {
-        result.add(base64Encode(maybeBytes));
-        continue;
-      }
-
-      // XFile 처럼 readAsBytes()가 있는 경우
-      if ((f as dynamic).readAsBytes != null) {
-        final bytes = await (f as dynamic).readAsBytes();
-        result.add(base64Encode(bytes));
-        continue;
-      }
-
-      // 웹에서 path 로 File 읽기는 불가. withData: true 로 선택하도록 유도.
-      if (kIsWeb) {
-        throw Exception('웹에서는 bytes가 필요합니다. 파일 선택 시 withData: true 로 설정해 주세요.');
-      }
-
-      // (모바일 전용) path 가 있으면 File 로 읽기
-      final String? path = (f as dynamic).path as String?;
-      if (path != null) {
-        // ignore: avoid_web_libraries_in_flutter
-        // dart:io를 못 쓰는 웹에서 이 분기는 호출되지 않음
-        // 아래 라인은 모바일 빌드에서만 컴파일/사용됨
-        // (웹 빌드에서 경고가 보이면 분리해도 되지만, 보통 문제 없이 빌드됩니다)
-        // import 'dart:io'; 가 없다면 이 분기는 사용되지 않습니다.
-        // 만약 android/ios에서도 web과 같은 코드로 가고 싶다면 위 두 케이스만 사용하세요.
-        // final bytes = await File(path).readAsBytes();
-        // result.add(base64Encode(bytes));
-        throw Exception('모바일에서만 path 읽기 허용. (현재 웹)');
-      } else {
-        throw Exception('이미지 바이트를 읽을 수 없습니다.');
-      }
+  // 이미지 선택 (최대 4장)
+  Future<void> _onPickImages() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: true,
+        withData: true,
+      );
+      if (result == null) return;
+      setState(() {
+        _files
+          ..clear()
+          ..addAll(result.files.take(4));
+      });
+    } catch (e) {
+      if (!mounted) return;
+      _showSnack('이미지 선택 오류: $e');
     }
-
-    return result;
   }
 
-  Future<void> _pick() async {
-    final r = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: true,
-      withData: true,
+  // 업로드 -> 성공 시 true
+  Future<bool> _uploadImages() async {
+    if (_files.isEmpty) return true; // 파일 없으면 그냥 통과(스킵과 동일 플로우)
+
+    try {
+      setState(() => _uploading = true);
+
+      final mpFiles = <MultipartFile>[];
+      for (final f in _files) {
+        final Uint8List? bytes = f.bytes;
+        if (bytes == null) {
+          _showSnack('파일 바이트를 읽지 못했어요: ${f.name}');
+          setState(() => _uploading = false);
+          return false;
+        }
+        mpFiles.add(MultipartFile.fromBytes(bytes, filename: f.name));
+      }
+
+      final form = FormData.fromMap({
+        'images': mpFiles, // 서버 필드명 다르면 이 부분만 바꿔주세요.
+      });
+
+      final url = '${appenv.Env.apiBaseUrl()}/api/style/analyze';
+      final resp = await _dio.post(url, data: form);
+      final ok = (resp.statusCode ?? 500) ~/ 100 == 2;
+      if (!ok) {
+        _showSnack('업로드 실패: ${resp.statusCode}');
+        setState(() => _uploading = false);
+        return false;
+      }
+
+      setState(() => _uploading = false);
+      return true;
+    } catch (e) {
+      _showSnack('업로드 오류: $e');
+      setState(() => _uploading = false);
+      return false;
+    }
+  }
+
+  // 업로드 후 다음 단계로
+  Future<void> _handleUploadAndNext() async {
+    if (_uploading) return;
+    final ok = await _uploadImages();
+    if (!ok || !mounted) return;
+
+    // Navigator 1.0
+    Navigator.of(context).pushReplacementNamed(_nextRoute);
+
+    // go_router 사용 시:
+    // context.go(_nextRoute);
+  }
+
+  // 스킵 → 바로 스와이프
+  void _handleSkip() {
+    if (_uploading) return;
+    Navigator.of(context).pushReplacementNamed(_nextRoute);
+    // go_router: context.go(_nextRoute);
+  }
+
+  void _showSnack(String msg) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.fromLTRB(16, 0, 16, 96 + bottomInset),
+      ),
     );
-    if (r != null) setState(() => _files = r.files.take(4).toList());
-  }
-
-  Future<void> _upload() async {
-    if (_files.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('최소 1장의 이미지를 선택해 주세요.')));
-      return;
-    }
-
-    setState(() => _loading = true);
-    try {
-      if (appenv.Env.useMock) {
-        // ✅ mock: json-server는 JSON만 파싱 → base64 배열로 전송
-        final imagesB64 = await _encodeSelectedImagesB64();
-
-        await _mockDio.post(
-          '/api/style/analyze', // routes.json에서 /style/analyze 로 rewrite됨
-          data: {'images': imagesB64},
-          options: Options(contentType: Headers.jsonContentType),
-        );
-      } else {
-        // ✅ 실서버: 네가 쓰던 기존 멀티파트 업로드 호출 유지
-        await StyleApi().uploadInitialPhotos(_files);
-      }
-
-      // 성공 → 다음 단계
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(PrefKeys.onboarding, 'swipe');
-
-      if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pushReplacementNamed(AppRoutes.Swipe); // 라우트 키 소문자 확인
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('업로드 실패: $e')));
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _skip() async {
-    setState(() => _loading = true);
-    try {
-      if (!appenv.Env.useMock) {
-        // 실서버일 때만 기존 스킵 API 호출
-        await StyleApi().skipInitialUpload();
-      }
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(PrefKeys.onboarding, 'swipe');
-
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(AppRoutes.Swipe);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('건너뛰기 실패: $e')));
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final size = MediaQuery.sizeOf(context);
+    final isPhoneLike = size.width < 600;
+
+    // 업로드 박스 높이(조금 크게)
+    double boxHeight = isPhoneLike ? size.height * 0.32 : size.height * 0.40;
+    boxHeight = boxHeight.clamp(220.0, isPhoneLike ? 360.0 : 460.0);
+
+    final grayText = Colors.black.withOpacity(0.45);
+    final border = Colors.black.withOpacity(0.08);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('온보딩: 초기 사진 업로드')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '최초 로그인 시 최대 4장 업로드',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: GridView.builder(
-                itemCount: _files.length + 1,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: Colors.black,
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        centerTitle: true,
+        title: Text(
+          'Survey',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: Colors.black,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Upload Your Own Style Photos.',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w800,
                 ),
-                itemBuilder: (_, i) {
-                  if (i == _files.length) {
-                    return OutlinedButton.icon(
-                      onPressed: _loading ? null : _pick,
-                      icon: const Icon(Icons.add),
-                      label: const Text('추가'),
-                    );
-                  }
-                  final f = _files[i];
-                  return Stack(
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Up to 4 outfit photos',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: grayText,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // 업로드 영역
+              GestureDetector(
+                onTap: _uploading ? null : _onPickImages,
+                child: Container(
+                  width: double.infinity,
+                  height: boxHeight,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: border),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Positioned.fill(
-                        child:
-                            (f.bytes != null)
-                                ? Image.memory(f.bytes!, fit: BoxFit.cover)
-                                : Container(
-                                  alignment: Alignment.center,
-                                  child: Text(f.name),
-                                ),
-                      ),
+                      if (_files.isEmpty)
+                        const Icon(
+                          Icons.image_outlined,
+                          size: 36,
+                          color: Colors.white70,
+                        ),
                       Positioned(
-                        top: 4,
-                        right: 4,
-                        child: InkWell(
-                          onTap:
-                              _loading
-                                  ? null
-                                  : () => setState(() => _files.removeAt(i)),
-                          child: const CircleAvatar(
-                            radius: 12,
-                            child: Icon(Icons.close, size: 14),
+                        right: 12,
+                        top: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: border),
+                          ),
+                          child: Text(
+                            '${_files.length.clamp(0, 4)} / 4',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
+                      if (_files.isNotEmpty)
+                        LayoutBuilder(
+                          builder: (context, c) {
+                            final w = c.maxWidth;
+                            final h = c.maxHeight;
+                            final itemW = (w - 24) / 2;
+                            final itemH = (h - 24) / 2;
+
+                            Widget thumb(PlatformFile f) {
+                              if (f.bytes == null) {
+                                return Container(
+                                  color: Colors.black.withOpacity(0.15),
+                                  child: const Icon(Icons.image, size: 24),
+                                );
+                              }
+                              return Image.memory(f.bytes!, fit: BoxFit.cover);
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: List.generate(_files.length, (i) {
+                                  return SizedBox(
+                                    width: itemW,
+                                    height: itemH,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: thumb(_files[i]),
+                                    ),
+                                  );
+                                }),
+                              ),
+                            );
+                          },
+                        ),
+                      if (_uploading)
+                        Container(
+                          color: Colors.black.withOpacity(0.1),
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2.4),
+                          ),
+                        ),
                     ],
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _loading ? null : _skip,
-                    child: const Text('건너뛰기'),
+
+              const Spacer(),
+
+              // Upload & Continue
+              SizedBox(
+                height: 48,
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: _uploading ? null : _handleUploadAndNext,
+                  child: Text(
+                    _uploading ? 'Uploading…' : 'Upload',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: _loading ? null : _upload,
-                    child: Text(_loading ? '업로드 중...' : '업로드하고 계속'),
+              ),
+              const SizedBox(height: 12),
+
+              // Skip
+              SizedBox(
+                height: 48,
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: _uploading ? null : _handleSkip,
+                  child: const Text(
+                    'Skip',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -79,31 +79,105 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Center(
-        child:
-            _loading
-                ? const CircularProgressIndicator()
-                : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Login'),
-                    const SizedBox(height: 12),
-                    GoogleSignInButton(
-                      authRepository: _authRepository,
-                      isLoading: _loading,
-                      onPressed: () async {
-                        if (kIsWeb) return; // 웹은 내부에서 GSI 렌더
-                        setState(() => _loading = true);
-                        try {
-                          await _authRepository.signInWithGoogle();
-                        } finally {
-                          if (mounted) setState(() => _loading = false);
-                        }
-                      },
+      backgroundColor: const Color(0xFFF5F6F8),
+      body: SafeArea(
+        // 웹은 상/하 여백을 꺼서 진짜 중앙 배치
+        top: !kIsWeb,
+        bottom: !kIsWeb,
+        left: true,
+        right: true,
+        child: Stack(
+          children: [
+            Center(
+              child: LayoutBuilder(
+                builder: (context, c) {
+                  // 🔑 모든 요소가 공유하는 “단일 폭”
+                  final double maxW = c.maxWidth >= 500
+                      ? 320.0
+                      : c.maxWidth * 0.86;
+
+                  return ConstrainedBox(
+                    constraints: BoxConstraints.tightFor(width: maxW),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          '옷마카세',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // 로고(정사각형) — maxW에 맞춰 중심 정렬
+                        AspectRatio(
+                          aspectRatio: 1,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              color: Colors.black,
+                              child: Image.asset(
+                                'assets/omakase.png', // pubspec.yaml에 등록 필요
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Center(
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    color: Colors.white70,
+                                    size: 48,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        // ✅ [수정된 부분] 불필요한 래퍼 위젯(SizedBox, Align)을 제거하여
+                        // Column의 'crossAxisAlignment'가 버튼을 직접 중앙 정렬하도록 수정했습니다.
+                        // 이렇게 하면 정렬 문제와 잠재적인 오버플로우 버그가 모두 해결됩니다.
+                        GoogleSignInButton(
+                          authRepository: _authRepository,
+                          isLoading: _loading,
+                          onPressed: () async {
+                            if (kIsWeb) return; // 웹은 내부에서 GSI 렌더
+                            setState(() => _loading = true);
+                            try {
+                              await _authRepository.signInWithGoogle();
+                            } finally {
+                              if (mounted) {
+                                setState(() => _loading = false);
+                              }
+                            }
+                          },
+                        ),
+
+                        const SizedBox(height: 12),
+                      ],
                     ),
-                  ],
+                  );
+                },
+              ),
+            ),
+
+            // 로딩 오버레이
+            if (_loading)
+              Container(
+                color: Colors.black.withOpacity(0.06),
+                alignment: Alignment.center,
+                child: const SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: CircularProgressIndicator(strokeWidth: 3),
                 ),
+              ),
+          ],
+        ),
       ),
     );
   }

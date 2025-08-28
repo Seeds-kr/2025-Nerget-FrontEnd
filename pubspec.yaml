@@ -81,7 +81,8 @@ flutter:
     - assets/style6.jpg
     - assets/style7.jpg
     - assets/style8.jpg
-
+    - assets/omakase.png
+    
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
