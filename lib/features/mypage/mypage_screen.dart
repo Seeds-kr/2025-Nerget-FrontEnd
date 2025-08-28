@@ -18,7 +18,6 @@ class _MyPageState extends State<MyPage> {
   };
 
   // 샘플 게시물(assets 등록 필요)
-feature/upload
 
   final List<String> posts = [
     'assets/feed_style1.jpg',
@@ -31,7 +30,6 @@ feature/upload
     'assets/feed_style8.jpg',
     'assets/feed_style9.jpg',
   ];
-dev
 
   @override
   Widget build(BuildContext context) {
