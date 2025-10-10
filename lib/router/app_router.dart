@@ -5,7 +5,6 @@ import 'package:omakase_app/features/auth/login_screen.dart';
 import 'package:omakase_app/features/onboarding/onboarding_upload_screen.dart';
 import 'package:omakase_app/features/home/home_shell.dart';
 import 'package:omakase_app/features/onboarding/swipe_test_screen.dart';
-import 'package:omakase_app/features/upload/upload_style_screen.dart';
 
 class AppRoutes {
   static const login = '/login';

@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:http/http.dart' as http;
-import 'package:http/browser_client.dart' as browser_http;
-import 'package:shared_preferences/shared_preferences.dart';
+// Use web-only browser client when running on web. On other platforms,
+// avoid importing browser_client.dart to prevent dart:html from being pulled in.
+import 'browser_client_stub.dart'
+    if (dart.library.html) 'browser_client_web.dart'
+    as browser_http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'env.dart';
 
 class AuthResult {
@@ -18,8 +22,12 @@ class AuthApi {
 
   http.Client _client() {
     if (kIsWeb) {
-      final c = browser_http.BrowserClient();
-      c.withCredentials = useCookieSession; // 세션 쿠키 방식일 때만 true
+      final c = browser_http.createBrowserClient();
+      try {
+        // some browser clients expose withCredentials; call dynamically
+        // ignore: avoid_dynamic_calls
+        (c as dynamic).withCredentials = useCookieSession;
+      } catch (_) {}
       return c;
     }
     return http.Client();
@@ -66,8 +74,12 @@ class AuthApi {
           (j['new'] ?? j['isNewUser'] ?? j['is_new'] ?? false) as bool;
 
       if (token.isNotEmpty) {
-        final sp = await SharedPreferences.getInstance();
-        await sp.setString('access_token', token);
+        const storage = FlutterSecureStorage();
+        await storage.write(key: 'access_token', value: token);
+        // Safe diagnostic: do not log token contents, only metadata
+        debugPrint(
+          '[AuthApi] saved access token to secure storage (len=${token.length})',
+        );
       }
       return AuthResult(ok: true, isNewUser: isNew, token: token);
     } finally {
@@ -80,23 +92,25 @@ class AuthApi {
     final client = _client();
     try {
       // ✅ nullable 토큰을 미리 non-null 로 정리
-      final sp = await SharedPreferences.getInstance();
-      final tok = (token ?? sp.getString('access_token') ?? '').trim();
+      const storage = FlutterSecureStorage();
+      final tok = (token ?? await storage.read(key: 'access_token') ?? '')
+          .trim();
+      debugPrint(
+        '[AuthApi] secure storage token present=${tok.isNotEmpty} len=${tok.length}',
+      );
 
       final baseHeaders = <String, String>{'accept': 'application/json'};
-      final withBearer =
-          tok.isNotEmpty
-              ? <String, String>{...baseHeaders, 'authorization': 'Bearer $tok'}
-              : baseHeaders;
+      final withBearer = tok.isNotEmpty
+          ? <String, String>{...baseHeaders, 'authorization': 'Bearer $tok'}
+          : baseHeaders;
 
-      final paths =
-          <String>{
-            _mePathFromDefine,
-            '/api/users/me',
-            '/api/me',
-            '/auth/me',
-            '/users/me',
-          }.toList();
+      final paths = <String>{
+        _mePathFromDefine,
+        '/api/users/me',
+        '/api/me',
+        '/auth/me',
+        '/users/me',
+      }.toList();
 
       for (final p in paths) {
         // 1) GET + Bearer
@@ -155,7 +169,8 @@ class AuthApi {
   }
 
   Future<void> logout() async {
-    final sp = await SharedPreferences.getInstance();
-    await sp.remove('access_token');
+    const storage = FlutterSecureStorage();
+    await storage.delete(key: 'access_token');
+    debugPrint('[AuthApi] removed access token from secure storage');
   }
 }

@@ -19,15 +19,28 @@ class GoogleSignInButtonImpl extends StatelessWidget {
     return SizedBox(
       width: 240,
       height: 48,
-      child: FilledButton(
-        onPressed:
-            isLoading
+      child: Builder(
+        builder: (context) {
+          return FilledButton(
+            onPressed: isLoading
                 ? null
                 : (onPressed ??
-                    () async {
-                      await authRepository.signInWithGoogle();
-                    }),
-        child: const Text('Sign in with Google'),
+                      () async {
+                        final acc = await authRepository.signInWithGoogle();
+                        if (acc == null) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                '이 플랫폼에서는 Google 로그인 기능이 지원되지 않습니다. 모바일에서 실행해 주세요.',
+                              ),
+                            ),
+                          );
+                        }
+                      }),
+            child: const Text('Sign in with Google'),
+          );
+        },
       ),
     );
   }

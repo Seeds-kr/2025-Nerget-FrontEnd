@@ -1,12 +1,3 @@
-/*import 'package:flutter/material.dart';
-
-class MyPageScreen extends StatelessWidget {
-  const MyPageScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Mypage Tab'));
-}
-*/
 import 'package:flutter/material.dart';
 
 class MyPage extends StatefulWidget {
@@ -17,205 +8,167 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
-  bool isEditingProfile = false;
-
-  Map<String, dynamic> profile = {
-    'name': 'imnuget',
-    'username': '@nuget',
-    'email': 'nuget@email.com',
-    'bio': 'Fashion is my life',
-    'location': 'South Korea, SK',
-    'website': 'nuget.com',
-    'followers': 2847,
-    'following': 892,
-    'posts': 24,
+  // 프로필/통계
+  final Map<String, dynamic> profile = {
+    'name': 'helena',
+    'username': '@helena',
+    'bio': 'Hi! I’m helena😉\nWelcome to my page.',
+    'followers': 57,
+    'following': 57,
   };
+
+  // 샘플 게시물(assets 등록 필요)
+  final List<String> posts = [
+    'assets/style1.jpg',
+    'assets/style2.jpg',
+    'assets/style3.jpg',
+    'assets/style4.jpg',
+    'assets/style5.jpg',
+    'assets/style6.jpg',
+    'assets/style7.jpg',
+    'assets/style8.jpg',
+  ];
 
   @override
   Widget build(BuildContext context) {
+    // Posts 개수는 리스트 길이로 계산
+    final int postCount = posts.length;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Profile"),
+        title: const Text('My Profile'),
         actions: [
           IconButton(
-            icon: Icon(isEditingProfile ? Icons.close : Icons.settings),
+            icon: const Icon(Icons.settings),
             onPressed: () {
-              setState(() {
-                isEditingProfile = !isEditingProfile;
-              });
+              // TODO: 설정 페이지로 이동
             },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildProfileSection(),
-            const SizedBox(height: 20),
-            _buildStatsSection(),
-            const SizedBox(height: 20),
-            _buildBioAndLinks(),
-            if (isEditingProfile) _buildEditButtons(),
-          ],
-        ),
+      body: Column(
+        children: [
+          const SizedBox(height: 16),
+          _buildHeader(),
+          const SizedBox(height: 12),
+          _buildStats(postCount),
+          const SizedBox(height: 8),
+          _buildBio(),
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+          // 게시물 영역
+          Expanded(child: postCount == 0 ? _buildEmpty() : _buildGrid()),
+        ],
+      ),
+      // ❌ BottomNavigationBar 제거 (상위 Scaffold에서만 관리)
+    );
+  }
+
+  // ───────────────── Header: 아바타 + 이름/아이디
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const CircleAvatar(
+            radius: 28,
+            backgroundImage: AssetImage('assets/style1.jpg'),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                profile['name'],
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                profile['username'],
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildProfileSection() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(
-          children: [
-            const CircleAvatar(
-              radius: 48,
-              backgroundImage: AssetImage(
-                'assets/style1.jpg',
-              ), // 존재하는 에셋으로 교체
-            ),
-            if (isEditingProfile)
-              const Positioned(
-                bottom: 0,
-                right: 0,
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.camera_alt, size: 18),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child:
-              isEditingProfile
-                  ? Column(
-                    children: [
-                      TextField(
-                        decoration: const InputDecoration(labelText: "Name"),
-                        controller: TextEditingController(
-                          text: profile['name'],
-                        ),
-                        onChanged: (value) => profile['name'] = value,
-                      ),
-                      TextField(
-                        decoration: const InputDecoration(
-                          labelText: "Username",
-                        ),
-                        controller: TextEditingController(
-                          text: profile['username'],
-                        ),
-                        onChanged: (value) => profile['username'] = value,
-                      ),
-                    ],
-                  )
-                  : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        profile['name'],
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        profile['username'],
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatsSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildStat("Posts", profile['posts']),
-        _buildStat("Followers", profile['followers']),
-        _buildStat("Following", profile['following']),
-      ],
-    );
-  }
-
-  Widget _buildStat(String label, int value) {
-    return Column(
+  // ───────────────── 통계: Posts / Followers / Following
+  Widget _buildStats(int postsCount) {
+    Widget item(String label, int value) => Column(
       children: [
         Text(
-          value.toString(),
+          '$value',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
+        const SizedBox(height: 4),
         Text(label, style: const TextStyle(color: Colors.grey)),
       ],
     );
-  }
 
-  Widget _buildBioAndLinks() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (!isEditingProfile)
-          Text(profile['bio'], style: const TextStyle(fontSize: 14))
-        else
-          TextField(
-            decoration: const InputDecoration(labelText: "Bio"),
-            controller: TextEditingController(text: profile['bio']),
-            onChanged: (value) => profile['bio'] = value,
-          ),
-        const SizedBox(height: 10),
-        if (!isEditingProfile) ...[
-          if (profile['location'] != null)
-            Text(
-              "📍 ${profile['location']}",
-              style: const TextStyle(fontSize: 14),
-            ),
-          if (profile['website'] != null)
-            Text(
-              "🔗 ${profile['website']}",
-              style: const TextStyle(fontSize: 14, color: Colors.blue),
-            ),
-        ] else ...[
-          TextField(
-            decoration: const InputDecoration(labelText: "Location"),
-            controller: TextEditingController(text: profile['location']),
-            onChanged: (value) => profile['location'] = value,
-          ),
-          TextField(
-            decoration: const InputDecoration(labelText: "Website"),
-            controller: TextEditingController(text: profile['website']),
-            onChanged: (value) => profile['website'] = value,
-          ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          item('Posts', postsCount),
+          item('Followers', profile['followers'] as int),
+          item('Following', profile['following'] as int),
         ],
-      ],
+      ),
     );
   }
 
-  Widget _buildEditButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              setState(() => isEditingProfile = false);
-              // 저장 로직 추가
-            },
-            icon: const Icon(Icons.save),
-            label: const Text("Save Changes"),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => setState(() => isEditingProfile = false),
-            child: const Text("Cancel"),
-          ),
-        ),
-      ],
+  // ───────────────── Bio
+  Widget _buildBio() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Text(
+        profile['bio'],
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 14),
+      ),
+    );
+  }
+
+  // ───────────────── 게시물 없음
+  Widget _buildEmpty() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.circle_outlined, size: 96),
+          SizedBox(height: 12),
+          Text('No Post', style: TextStyle(fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────── 그리드(3열)
+  Widget _buildGrid() {
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: posts.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 2,
+        crossAxisSpacing: 2,
+      ),
+      itemBuilder: (context, index) {
+        return Image.asset(
+          posts[index],
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // If an asset is missing or fails to load, show a neutral box
+            return Container(color: Colors.grey[300]);
+          },
+        );
+      },
     );
   }
 }

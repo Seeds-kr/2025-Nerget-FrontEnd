@@ -35,6 +35,7 @@ dependencies:
   # --- 핵심 ---
   http: ^0.13.5
   file_picker: ^8.0.3
+  image_picker: ^0.8.7
   flutter_riverpod: ^2.6.0
   flutter_hooks: ^0.21.2
   shared_preferences: ^2.2.3
@@ -42,6 +43,7 @@ dependencies:
   dio: ^5.8.0+1
   js: ^0.6.7
   google_sign_in: ^6.2.1
+  flutter_secure_storage: ^9.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -71,29 +73,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/google_logo.png
-    - assets/Kakao.jpg  
-    - assets/Naver.png
-    - assets/feed_style1.jpg
-    - assets/feed_style2.jpg
-    - assets/feed_style3.jpg
-    - assets/feed_style4.jpg
-    - assets/feed_style5.jpg 
-    - assets/feed_style6.jpg
-    - assets/feed_style7.jpg
-    - assets/feed_style8.jpg
-    - assets/feed_style9.jpg
-    - assets/feed_style10.jpg
-    - assets/feed_style11.jpg
-    - assets/feed_style12.jpg
-    - assets/feed_style13.jpg
-    - assets/feed_style14.jpg
-    - assets/feed_style15.jpg
-    - assets/feed_style16.jpg
-    - assets/feed_style17.jpg
-    - assets/feed_style18.jpg
-    - assets/feed_style19.jpg
-    - assets/feed_style20.jpg
+    - assets/
     
 
   # To add assets to your application, add an assets section, like this:

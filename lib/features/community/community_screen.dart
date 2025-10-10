@@ -62,12 +62,9 @@ class _CommunityPageState extends State<CommunityPage>
 
     final app = context.app;
     final List<Post> source = app.posts;
-    final List<Post> byMbti =
-        (selectedMbti == null || selectedMbti == '전체')
-            ? source
-            : source
-                .where((p) => p.title.toUpperCase() == selectedMbti)
-                .toList();
+    final List<Post> byMbti = (selectedMbti == null || selectedMbti == '전체')
+        ? source
+        : source.where((p) => p.title.toUpperCase() == selectedMbti).toList();
 
     final query = _searchQuery.trim().toLowerCase();
     final List<Post> filtered = query.isEmpty
@@ -104,7 +101,7 @@ class _CommunityPageState extends State<CommunityPage>
                             },
                           ),
                     filled: true,
-                    fillColor: Colors.grey[200],
+                    fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(28),
                       borderSide: BorderSide.none,
@@ -120,8 +117,10 @@ class _CommunityPageState extends State<CommunityPage>
                 height: 56,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
                   itemCount: mbtiList.length,
                   itemBuilder: (context, index) {
                     final mbti = mbtiList[index];
@@ -155,8 +154,7 @@ class _CommunityPageState extends State<CommunityPage>
                                 : (Colors.grey[300]!),
                           ),
                         ),
-                        materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     );
                   },
@@ -182,6 +180,21 @@ class _CommunityPageState extends State<CommunityPage>
               ListTile(
                 title: Text(post.title),
                 subtitle: Text(post.createdAt.toLocal().toString()),
+                trailing: IconButton(
+                  tooltip: post.saved ? '저장 취소' : '저장',
+                  icon: Icon(
+                    post.saved ? Icons.bookmark : Icons.bookmark_border,
+                  ),
+                  onPressed: () {
+                    context.app.toggleSave(post.id);
+                    setState(() {});
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(post.saved ? '저장을 취소했어요' : '저장했어요'),
+                      ),
+                    );
+                  },
+                ),
               ),
               if (image.isNotEmpty)
                 GestureDetector(
@@ -227,4 +240,3 @@ class CommunityPost {
     required this.description,
   });
 }
-

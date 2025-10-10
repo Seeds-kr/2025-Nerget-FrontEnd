@@ -35,12 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // 신규 유저 → 스와이프 페이지로 이동
+        // 신규 유저 → 온보딩 업로드 화면으로 이동
         if (res.isNewUser) {
           if (!mounted) return;
           Navigator.of(
             context,
-          ).pushNamedAndRemoveUntil(AppRoutes.Swipe, (route) => false);
+          ).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
           return;
         }
 
@@ -49,16 +49,21 @@ class _LoginScreenState extends State<LoginScreen> {
           final me = await _authApi.me(token: res.token);
           final completed = (me['profileCompleted'] == true);
           if (!mounted) return;
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            AppRoutes.Swipe,
-            (route) => false,
-          );
+          if (completed) {
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil(AppRoutes.feed, (route) => false);
+          } else {
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
+          }
           return;
         } catch (_) {
           if (!mounted) return;
           Navigator.of(
             context,
-          ).pushNamedAndRemoveUntil(AppRoutes.Swipe, (route) => false);
+          ).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
           return;
         }
       } catch (e) {
@@ -71,15 +76,18 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     };
 
-    // 초기 시도 (웹은 원탭/FedCM 유도, 모바일은 계정 선택)
-    // ignore: discarded_futures
-    _authRepository.signInWithGoogle();
+    // 초기 시도: 웹에서는 원탭/FedCM 유도로 자동 호출하지만,
+    // 모바일에서는 사용자 액션(버튼 클릭)으로 시작해야 안정적입니다.
+    if (kIsWeb) {
+      // ignore: discarded_futures
+      _authRepository.signInWithGoogle();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      backgroundColor: Colors.white,
       body: SafeArea(
         // 웹은 상/하 여백을 꺼서 진짜 중앙 배치
         top: !kIsWeb,
@@ -148,7 +156,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (kIsWeb) return; // 웹은 내부에서 GSI 렌더
                             setState(() => _loading = true);
                             try {
-                              await _authRepository.signInWithGoogle();
+                              final account = await _authRepository
+                                  .signInWithGoogle();
+                              if (account == null) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('로그인에 실패했습니다. 다시 시도해 주세요.'),
+                                  ),
+                                );
+                              }
                             } finally {
                               if (mounted) {
                                 setState(() => _loading = false);
@@ -168,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // 로딩 오버레이
             if (_loading)
               Container(
-                color: Colors.black.withOpacity(0.06),
+                color: const Color.fromRGBO(0, 0, 0, 0.06),
                 alignment: Alignment.center,
                 child: const SizedBox(
                   width: 36,

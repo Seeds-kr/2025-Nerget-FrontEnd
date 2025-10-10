@@ -6,45 +6,90 @@ import '../saved/saved_screen.dart';
 import '../mypage/mypage_screen.dart';
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  final int initialIndex;
+  final int feedInitialTabIndex;
+  const HomeShell({
+    super.key,
+    this.initialIndex = 0,
+    this.feedInitialTabIndex = 0,
+  });
 
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _index = 0;
+  late int _index = widget.initialIndex;
 
-  final _tabs = const <Widget>[
-    HomeFeedScreen(), // 피드
-    CommunityPage(), // 커뮤니티
-    UploadStyleScreen(), // 업로드(탭에서 바로 업로드)
-    SavedScreen(), // 저장됨
-    MyPage(), // 마이페이지
+  List<Widget> get _tabs => <Widget>[
+    HomeFeedScreen(initialTabIndex: widget.feedInitialTabIndex),
+    const CommunityPage(),
+    const UploadStyleScreen(),
+    const SavedScreen(),
+    const MyPage(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final divider = Divider(
+      height: 1,
+      thickness: 1,
+      color: const Color.fromRGBO(0, 0, 0, 0.06),
+    );
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: '홈'),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            label: '커뮤니티',
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          divider,
+          NavigationBar(
+            backgroundColor: Colors.white,
+            indicatorColor: Colors.transparent,
+            selectedIndex: _index,
+            onDestinationSelected: (i) {
+              setState(() => _index = i);
+              // URL 동기화 (웹에서 주소 해시 변경)
+              switch (i) {
+                case 0:
+                  Navigator.of(context).pushReplacementNamed('/feed');
+                  break;
+                case 1:
+                  Navigator.of(context).pushReplacementNamed('/community');
+                  break;
+                case 2:
+                  Navigator.of(context).pushReplacementNamed('/upload');
+                  break;
+                case 3:
+                  Navigator.of(context).pushReplacementNamed('/saved');
+                  break;
+                case 4:
+                  Navigator.of(context).pushReplacementNamed('/mypage');
+                  break;
+              }
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                label: 'home',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.people_outline),
+                label: 'community',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.add_circle_outline),
+                label: 'upload',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.bookmark_outline),
+                label: 'saved',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                label: 'mypage',
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.add_circle_outline),
-            label: '업로드',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bookmark_outline),
-            label: '저장',
-          ),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: '마이'),
         ],
       ),
     );

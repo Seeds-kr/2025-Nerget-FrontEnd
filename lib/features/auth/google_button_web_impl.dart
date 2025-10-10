@@ -26,70 +26,69 @@ class GoogleSignInButtonImpl extends StatefulWidget {
 }
 
 class _GoogleSignInButtonImplState extends State<GoogleSignInButtonImpl> {
-  // 인스턴스마다 유니크한 viewType / containerId 생성 (핫리로드/하드리로드 안전)
-  late final String _containerId;
-  late final String _viewTypeForThisInstance;
+  late final String _viewTypeForThisInstance =
+      'gsi-btn-${DateTime.now().microsecondsSinceEpoch}';
+  late final String _containerId =
+      'gsi-container-${DateTime.now().microsecondsSinceEpoch}';
 
   @override
   void initState() {
     super.initState();
 
-    final stamp = DateTime.now().microsecondsSinceEpoch;
-    _containerId = 'gsi-button-container-$stamp';
-    _viewTypeForThisInstance = 'gsi_button_view_$stamp';
-
-    // 0) GSI 스크립트가 head에 없으면 직접 주입 (index.html 누락해도 동작)
-    if (html.document.head != null &&
-        html.document.getElementById('gsi-client') == null) {
-      final s =
-          html.ScriptElement()
-            ..id = 'gsi-client'
-            ..src = 'https://accounts.google.com/gsi/client'
-            ..async = true
-            ..defer = true;
-      html.document.head!.append(s);
-      // ignore: avoid_print
-      print('[GSI] injected gsi/client script');
+    // gsi/client 스크립트 주입(중복 주입에 안전)
+    final hasGoogle = js_util.getProperty(html.window, 'google');
+    if (hasGoogle == null &&
+        html.document.querySelector(
+              'script[src="https://accounts.google.com/gsi/client"]',
+            ) ==
+            null) {
+      final script = html.ScriptElement()
+        ..src = 'https://accounts.google.com/gsi/client'
+        ..async = true
+        ..defer = true;
+      html.document.head?.append(script);
     }
 
-    // 1) 유니크 viewFactory 등록 (인스턴스마다 한 번)
+    // 1) 유니크 viewFactory 등록
     ui_web.platformViewRegistry.registerViewFactory(_viewTypeForThisInstance, (
       int _,
     ) {
-      final root =
-          html.DivElement()
-            ..id = _containerId
-            ..style.width = '240px'
-            ..style.height = '48px'
-            ..style.display = 'block';
-      return root; // HtmlElement 반환
+      final root = html.DivElement()
+        ..id = _containerId
+        ..style.width = '240px'
+        ..style.height = '48px'
+        ..style.display = 'block';
+      return root;
     });
 
-    // 2) DOM 부착 + GSI 스크립트 로드를 모두 기다렸다가 렌더
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      void waitReady(num _) {
-        final hasContainer = html.document.getElementById(_containerId) != null;
-        final hasGoogle = js_util.getProperty(html.window, 'google') != null;
-        if (!hasContainer || !hasGoogle) {
-          html.window.requestAnimationFrame(waitReady);
-          return;
-        }
-        // ignore: avoid_print
-        print('[GSI] renderButton on #$_containerId');
-        widget.authRepository.renderGoogleButton(_containerId);
-      }
-
-      html.window.requestAnimationFrame(waitReady);
+    // 2) 버튼 렌더 (window.google 로딩 이후)
+    html.window.requestAnimationFrame((_) {
+      widget.authRepository.renderGoogleButton(_containerId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // 부모가 사이즈를 주지 않으면 0x0로 안 보일 수 있으므로 고정 크기
-    return SizedBox(
-      width: 240,
-      height: 48,
-      child: HtmlElementView(viewType: _viewTypeForThisInstance),
+    return Stack(
+      children: [
+        SizedBox(
+          width: 240,
+          height: 48,
+          child: HtmlElementView(viewType: _viewTypeForThisInstance),
+        ),
+        if (widget.isLoading)
+          Positioned.fill(
+            child: Container(
+              color: const Color.fromRGBO(0, 0, 0, 0.06),
+              alignment: Alignment.center,
+              child: const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 3),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

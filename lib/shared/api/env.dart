@@ -1,30 +1,38 @@
 import 'package:flutter/foundation.dart';
 
 class Env {
-  /// mock 서버를 쓸지 여부 (flutter run --dart-define=USE_MOCK=true/false)
+  /// mock 서버 사용 여부
   static const bool useMock = bool.fromEnvironment(
     'USE_MOCK',
     defaultValue: true,
   );
 
-  /// API Base URL (flutter run --dart-define=BASE_URL=... 로 주입 가능)
+  /// API Base URL
   static String apiBaseUrl() {
     const fromDefine = String.fromEnvironment('BASE_URL', defaultValue: '');
     if (fromDefine.isNotEmpty) return fromDefine;
 
-    // 기본값: 로컬 환경
+    // 기본값: 로컬
     if (kIsWeb) {
-      // 웹일 때
       return 'http://localhost:8080';
     } else {
-      // 안드로이드 에뮬레이터에서 PC localhost 접근용
       return 'http://10.0.2.2:8080';
     }
   }
 
-  /// Google OAuth Web Client ID (flutter run --dart-define=GOOGLE_CLIENT_ID=... 로 주입)
-  static const String googleWebClientId = String.fromEnvironment(
-    '1076507336995-uo4b83nsjjc24rcot71546lntebifp5k.apps.googleusercontent.com',
+  /// Google OAuth Client IDs (필요 시 주입)
+  // Provide platform-specific client IDs via `--dart-define`.
+  // Example: --dart-define=GSI_CLIENT_ID_WEB=<your-web-client-id>
+  static const String googleClientIdWeb = String.fromEnvironment(
+    'GSI_CLIENT_ID_WEB',
+    defaultValue: '',
+  );
+  static const String googleClientIdAndroid = String.fromEnvironment(
+    'GSI_CLIENT_ID_ANDROID',
+    defaultValue: '',
+  );
+  static const String googleClientIdIos = String.fromEnvironment(
+    'GSI_CLIENT_ID_IOS',
     defaultValue: '',
   );
 }

@@ -82,14 +82,10 @@ class _OnboardingUploadScreenState extends State<OnboardingUploadScreen> {
   // 업로드 후 다음 단계로
   Future<void> _handleUploadAndNext() async {
     if (_uploading) return;
+    // 업로드 후 다음 단계로 이동
     final ok = await _uploadImages();
     if (!ok || !mounted) return;
-
-    // Navigator 1.0
     Navigator.of(context).pushReplacementNamed(_nextRoute);
-
-    // go_router 사용 시:
-    // context.go(_nextRoute);
   }
 
   // 스킵 → 바로 스와이프
@@ -121,8 +117,8 @@ class _OnboardingUploadScreenState extends State<OnboardingUploadScreen> {
     double boxHeight = isPhoneLike ? size.height * 0.32 : size.height * 0.40;
     boxHeight = boxHeight.clamp(220.0, isPhoneLike ? 360.0 : 460.0);
 
-    final grayText = Colors.black.withOpacity(0.45);
-    final border = Colors.black.withOpacity(0.08);
+    final grayText = const Color.fromRGBO(0, 0, 0, 0.45);
+    final border = const Color.fromRGBO(0, 0, 0, 0.08);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -175,7 +171,7 @@ class _OnboardingUploadScreenState extends State<OnboardingUploadScreen> {
                   height: boxHeight,
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.08),
+                    color: const Color.fromRGBO(0, 0, 0, 0.08),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: border),
                   ),
@@ -221,7 +217,7 @@ class _OnboardingUploadScreenState extends State<OnboardingUploadScreen> {
                             Widget thumb(PlatformFile f) {
                               if (f.bytes == null) {
                                 return Container(
-                                  color: Colors.black.withOpacity(0.15),
+                                  color: const Color.fromRGBO(0, 0, 0, 0.15),
                                   child: const Icon(Icons.image, size: 24),
                                 );
                               }
@@ -249,7 +245,7 @@ class _OnboardingUploadScreenState extends State<OnboardingUploadScreen> {
                         ),
                       if (_uploading)
                         Container(
-                          color: Colors.black.withOpacity(0.1),
+                          color: const Color.fromRGBO(0, 0, 0, 0.1),
                           child: const Center(
                             child: CircularProgressIndicator(strokeWidth: 2.4),
                           ),
