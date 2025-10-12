@@ -45,5 +45,19 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+	  <dict>
+	    <key>CFBundleTypeRole</key>
+	    <string>Editor</string>
+	    <key>CFBundleURLSchemes</key>
+	    <array>
+	      <!-- 반드시 GCP에서 받은 Reverse Client ID 넣기 -->
+	      <string>1076507336995-pds8nuet9g2tjm07f891spgqrhn45p3c.apps.googleusercontent.com</string>
+	    </array>
+	  </dict>
+	</array>
+
+	<!-- Optional: GoogleService-Info.plist 기반 설정이 필요한 경우 추가 -->
 </dict>
 </plist>

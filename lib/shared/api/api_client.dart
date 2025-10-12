@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'env.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
 
   Future<Map<String, String>> _headers({bool json = false}) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('accessToken');
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'access_token');
     final h = <String, String>{'Accept': 'application/json'};
     if (json) h['Content-Type'] = 'application/json';
     if (token != null && token.isNotEmpty) h['Authorization'] = 'Bearer $token';
@@ -27,6 +27,18 @@ class ApiClient {
 
   Future<http.Response> get(String path) async {
     return _client.get(_url(path), headers: await _headers());
+  }
+
+  Future<http.Response> put(String path, {Map<String, dynamic>? body}) async {
+    return _client.put(
+      _url(path),
+      headers: await _headers(json: true),
+      body: jsonEncode(body ?? {}),
+    );
+  }
+
+  Future<http.Response> delete(String path) async {
+    return _client.delete(_url(path), headers: await _headers());
   }
 
   Future<http.StreamedResponse> multipart(
