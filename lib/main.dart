@@ -19,7 +19,7 @@ class OmakaseApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: '옷마카세',
         initialRoute: AppRoutes.login,
-        routes: AppRouter.routes, // ✅ Navigator 라우팅 사용
+        onGenerateRoute: AppRouter.onGenerateRoute,
         theme: ThemeData(
           colorSchemeSeed: Colors.blue,
           useMaterial3: true,

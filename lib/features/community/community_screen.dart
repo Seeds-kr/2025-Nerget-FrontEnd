@@ -1,16 +1,6 @@
-/*import 'package:flutter/material.dart';
-
-class CommunityScreen extends StatelessWidget {
-  const CommunityScreen({super.key});
-  @override
-  Widget build(BuildContext context) =>
-      const Center(child: Text('Community Tab'));
-}
-*/
 import 'package:flutter/material.dart';
-import '../state/app_state.dart'; // context.app 확장자 사용
-import '../models/post.dart'; // 우리 프로젝트의 Post 모델
-import '../home/post_detail_page.dart'; // 상세 페이지
+import 'package:omakase_app/features/models/post.dart';
+import 'package:omakase_app/router/app_router.dart';
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -19,224 +9,254 @@ class CommunityPage extends StatefulWidget {
   State<CommunityPage> createState() => _CommunityPageState();
 }
 
-class _CommunityPageState extends State<CommunityPage>
-    with AutomaticKeepAliveClientMixin<CommunityPage> {
-  @override
-  bool get wantKeepAlive => true;
+class _CommunityPageState extends State<CommunityPage> {
+  final ScrollController _scroll = ScrollController();
+  final List<Map<String, dynamic>> _posts = [];
+  bool _loading = false;
+  bool _hasMore = true;
+  int _page = 0;
 
-  String? selectedMbti; // null이면 '전체'
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  String? _selectedMbti;
 
-  static const List<String> mbtiList = [
-    '전체',
-    'INFP',
-    'ENFP',
-    'INFJ',
-    'ENFJ',
-    'INTP',
-    'ENTP',
-    'INTJ',
-    'ENTJ',
-    'ISFP',
-    'ESFP',
-    'ISFJ',
-    'ESFJ',
-    'ISTP',
-    'ESTP',
-    'ISTJ',
-    'ESTJ',
+  final List<String> _mbtiList = [
+    'INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP',
+    'ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP',
   ];
 
-  // 기존 더미는 AppState에 시드됨. 여기서는 전역 posts를 그대로 사용
+  @override
+  void initState() {
+    super.initState();
+    _loadMore();
+    _scroll.addListener(() {
+      if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 300) {
+        _loadMore();
+      }
+    });
+  }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _scroll.dispose();
     super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    _page = 0;
+    _posts.clear();
+    _hasMore = true;
+    setState(() {});
+    await _loadMore();
+  }
+
+  Future<void> _loadMore() async {
+    if (_loading || !_hasMore) return;
+    setState(() => _loading = true);
+    try {
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      final newPosts = List.generate(10, (i) {
+        final idx = _page * 10 + i;
+        return {
+          'id': idx,
+          'mbti': _mbtiList[idx % _mbtiList.length],
+          'user': 'User_$idx',
+          'img': 'https://picsum.photos/seed/post_$idx/800/800',
+          'caption': '오늘의 스타일 ✨ #OOTD #${_mbtiList[idx % _mbtiList.length]}',
+          'likes': (idx * 13) % 97,
+          'comments': (idx * 7) % 15,
+        };
+      });
+
+      _posts.addAll(newPosts);
+      _hasMore = newPosts.isNotEmpty;
+      _page++;
+      if (mounted) setState(() {});
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredPosts {
+    if (_selectedMbti == null) return _posts;
+    return _posts.where((p) => p['mbti'] == _selectedMbti).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    final app = context.app;
-    final List<Post> source = app.posts;
-    final List<Post> byMbti = (selectedMbti == null || selectedMbti == '전체')
-        ? source
-        : source.where((p) => p.title.toUpperCase() == selectedMbti).toList();
-
-    final query = _searchQuery.trim().toLowerCase();
-    final List<Post> filtered = query.isEmpty
-        ? byMbti
-        : byMbti.where((p) {
-            final t = p.title.toLowerCase();
-            final d = (p.description ?? '').toLowerCase();
-            return t.contains(query) || d.contains(query);
-          }).toList();
+    const black = Color(0xFF111111);
+    const divider = Color(0xFFEAEAEA);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Community'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(108),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (v) => setState(() => _searchQuery = v),
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: '검색어를 입력하세요',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchQuery.isEmpty
-                        ? null
-                        : IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(28),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 0,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 56,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 8,
-                  ),
-                  itemCount: mbtiList.length,
-                  itemBuilder: (context, index) {
-                    final mbti = mbtiList[index];
-                    final bool isSelected = (selectedMbti ?? '전체') == mbti;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ChoiceChip(
-                        label: Text(
-                          mbti,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white : Colors.black,
-                          ),
-                        ),
-                        selected: isSelected,
-                        onSelected: (_) {
-                          setState(() {
-                            selectedMbti = (mbti == '전체')
-                                ? null
-                                : (isSelected ? null : mbti);
-                          });
-                        },
-                        selectedColor: Colors.blueAccent,
-                        backgroundColor: Colors.grey[200],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: isSelected
-                                ? Colors.blueAccent
-                                : (Colors.grey[300]!),
-                          ),
-                        ),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+        elevation: 0,
+        title: const Text(
+          'Community',
+          style: TextStyle(
+            color: black,
+            fontWeight: FontWeight.w800,
           ),
         ),
+        centerTitle: false,
       ),
-      body: ListView.separated(
-        key: const PageStorageKey('community_feed'),
-        padding: const EdgeInsets.only(bottom: 24),
-        itemCount: filtered.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final post = filtered[index];
-          final image = (post.images.isNotEmpty)
-              ? post.images.first
-              : (post.imageUrl ?? '');
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ListTile(
-                title: Text(post.title),
-                subtitle: Text(post.createdAt.toLocal().toString()),
-                trailing: IconButton(
-                  tooltip: post.saved ? '저장 취소' : '저장',
-                  icon: Icon(
-                    post.saved ? Icons.bookmark : Icons.bookmark_border,
-                  ),
-                  onPressed: () {
-                    context.app.toggleSave(post.id);
-                    setState(() {});
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(post.saved ? '저장을 취소했어요' : '저장했어요'),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        color: black,
+        child: CustomScrollView(
+          controller: _scroll,
+          slivers: [
+            // MBTI 필터 헤더
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 96,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _mbtiList.length,
+                  itemBuilder: (context, i) {
+                    final type = _mbtiList[i];
+                    final selected = _selectedMbti == type;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedMbti = selected ? null : type;
+                        });
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: selected ? Colors.black : const Color(0xFFE0E0E0),
+                                  width: selected ? 2 : 1,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                type,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: selected ? Colors.black : Colors.black54,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
                 ),
               ),
-              if (image.isNotEmpty)
-                GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => PostDetailPage(post: post),
-                    ),
+            ),
+
+            // 게시물 피드
+            SliverList.builder(
+              itemCount: _filteredPosts.length,
+              itemBuilder: (context, i) {
+                final postData = _filteredPosts[i];
+                final post = Post(
+                  id: postData['id'],
+                  title: postData['user'],
+                  imageUrl: postData['img'],
+                  createdAt: DateTime.now(),
+                  likeCount: postData['likes'],
+                  commentCount: postData['comments'],
+                  description: postData['caption'],
+                  images: [postData['img']],
+                );
+
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.post, arguments: post);
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 유저 영역
+                      ListTile(
+                        leading: const CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Color(0xFFEEEEEE),
+                          child: Icon(Icons.person, color: black),
+                        ),
+                        title: Text(
+                          post.title,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        subtitle: Text(postData['mbti'], style: const TextStyle(fontSize: 12)),
+                        dense: true,
+                      ),
+
+                      // 이미지
+                      AspectRatio(
+                        aspectRatio: 1,
+                        child: Image.network(
+                          post.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: const Color(0xFFF5F5F5),
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.image_not_supported, color: black),
+                          ),
+                        ),
+                      ),
+
+                      // 액션버튼
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.favorite_border),
+                              onPressed: () {},
+                              splashRadius: 20,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.chat_bubble_outline),
+                              onPressed: () {
+                                Navigator.pushNamed(context, AppRoutes.post, arguments: post);
+                              },
+                              splashRadius: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // 캡션
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          post.description ?? '',
+                          style: const TextStyle(fontSize: 13, height: 1.4),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(height: 1, color: divider),
+                    ],
                   ),
-                  child: AspectRatio(
-                    aspectRatio: 3 / 4,
-                    child: Image(
-                      image: image.startsWith('http')
-                          ? NetworkImage(image)
-                          : AssetImage(image) as ImageProvider,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              if ((post.description ?? '').isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(post.description!),
-                ),
-              const SizedBox(height: 12),
-            ],
-          );
-        },
+                );
+              },
+            ),
+
+            // 로딩 인디케이터
+            SliverToBoxAdapter(
+              child: _loading
+                  ? const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : const SizedBox(height: 24),
+            ),
+          ],
+        ),
       ),
     );
   }
-}
-
-/// 화면 내 더미용 타입 (우리 Post와 이름 충돌 방지)
-class CommunityPost {
-  final List<String> images; // 에셋 경로들
-  final String mbti;
-  final String description;
-
-  const CommunityPost({
-    required this.images,
-    required this.mbti,
-    required this.description,
-  });
 }

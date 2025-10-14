@@ -53,6 +53,31 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 좋아요 토글
+  void toggleLike(int postId) {
+    final idx = _posts.indexWhere((p) => p.id == postId);
+    if (idx == -1) return;
+    final p = _posts[idx];
+    _posts[idx] = p.copyWith(
+      liked: !p.liked,
+      likeCount: p.liked ? p.likeCount - 1 : p.likeCount + 1,
+    );
+    notifyListeners();
+  }
+
+  // 댓글 추가
+  void addComment(int postId, String comment) {
+    final idx = _posts.indexWhere((p) => p.id == postId);
+    if (idx == -1) return;
+    final p = _posts[idx];
+    _posts[idx] = p.copyWith(
+      comments: [comment, ...p.comments],
+      commentCount: p.commentCount + 1,
+    );
+    notifyListeners();
+  }
+
+
   // 게시글 올리기(내 글)
   void addPost({
     required String title,

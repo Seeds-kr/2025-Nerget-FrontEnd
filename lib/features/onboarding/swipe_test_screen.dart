@@ -93,18 +93,16 @@ class _SwipeTestScreenState extends State<SwipeTestScreen> {
                 : () => Navigator.of(
                     context,
                   ).pushReplacementNamed(AppRoutes.feed),
-            child: const Text('건너뛰기'),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
+            child: const Text('Skip'),
           ),
         ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (done) {
-            final double maxW = constraints.maxWidth.clamp(0, 560);
-            return Align(
-              alignment: Alignment.topCenter,
-              child: SizedBox(width: maxW, child: const _SwipeResultView()),
-            );
+            // 결과 페이지로 이동하기 전의 로딩 상태
+            return const Center(child: CircularProgressIndicator());
           }
           final double maxW = constraints.maxWidth.clamp(0, 560);
           return Align(
@@ -138,6 +136,15 @@ class _SwipeTestScreenState extends State<SwipeTestScreen> {
 
                           setState(() {
                             _index++; // 트리에서 즉시 제거
+                            if (_index >= _items.length) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                  AppRoutes.mbtiResult,
+                                  (route) => false,
+                                  arguments: 'INFP', // TODO: 실제 MBTI 결과로 교체
+                                );
+                              });
+                            }
                           });
 
                           // 다음 장 미리 로드
@@ -206,7 +213,7 @@ class _SwipeTestScreenState extends State<SwipeTestScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton.icon(
+                      child: OutlinedButton.icon(
                         onPressed: _sending
                             ? null
                             : () {
@@ -218,6 +225,11 @@ class _SwipeTestScreenState extends State<SwipeTestScreen> {
                               },
                         icon: const Icon(Icons.close),
                         label: const Text('싫어요'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          side: const BorderSide(color: Colors.black),
+                          minimumSize: const Size.fromHeight(52),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -233,182 +245,17 @@ class _SwipeTestScreenState extends State<SwipeTestScreen> {
                               },
                         icon: const Icon(Icons.favorite),
                         label: const Text('좋아요'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(52),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-    );
-  }
-}
-
-class _SwipeResultView extends StatelessWidget {
-  const _SwipeResultView();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 헤더
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            alignment: Alignment.center,
-            child: Column(
-              children: [
-                const Icon(Icons.auto_awesome, size: 40),
-                const SizedBox(height: 12),
-                Text(
-                  '스타일 소개팅 완료!',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '당신만의 패션 MBTI가 분석되었습니다',
-                  style: const TextStyle(color: Color.fromRGBO(0, 0, 0, 0.54)),
-                ),
-              ],
-            ),
-          ),
-
-          // MBTI 카드
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color.fromRGBO(0, 0, 0, 0.08)),
-            ),
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-            child: Column(
-              children: const [
-                Text('당신의 패션 MBTI는', style: TextStyle(color: Colors.black54)),
-                SizedBox(height: 8),
-                Text(
-                  'INTJ',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '컬러풀 미니멀리스트',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // 섹션 타이틀
-          Row(
-            children: const [
-              Icon(Icons.favorite_border, size: 18),
-              SizedBox(width: 6),
-              Text('스타일 특징', style: TextStyle(fontWeight: FontWeight.w800)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '컬러 포인트를 활용한 미니멀한 스타일링을 선호하는 당신! 기본적으로는 심플하고 깔끔한 옷차림을 좋아하지만, 포인트가 되는 컬러나 액세서리로 개성을 표현하는 것을 즐깁니다. 개구쟁이 같은 분위기를 선호하면서도 다양한 스타일에 도전하는 것을 두려워하지 않는 유연한 패션 감각을 가지고 있어요.',
-            style: TextStyle(height: 1.45),
-          ),
-
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: const [
-              _Tag('#컬러포인트'),
-              _Tag('#미니멀'),
-              _Tag('#캐주얼'),
-              _Tag('#다양성'),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // 버튼들
-          SizedBox(
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (_) => const HomeShell(
-                      initialIndex: 0,
-                      feedInitialTabIndex: 1, // For you 탭 선택
-                    ),
-                    settings: const RouteSettings(name: AppRoutes.feed),
-                  ),
-                );
-              },
-              child: const Text(
-                '나만의 스타일 추천받기',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 48,
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.black,
-                side: const BorderSide(color: Color.fromRGBO(0, 0, 0, 0.2)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('공유하기 기능은 준비 중입니다.')),
-                );
-              },
-              child: const Text(
-                '결과 공유하기',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-}
-
-class _Tag extends StatelessWidget {
-  final String text;
-  const _Tag(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color.fromRGBO(0, 0, 0, 0.04),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color.fromRGBO(0, 0, 0, 0.08)),
-      ),
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
     );
   }
 }

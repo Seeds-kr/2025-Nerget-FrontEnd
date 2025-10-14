@@ -11,9 +11,14 @@ class PostDetailPage extends StatefulWidget {
 }
 
 class _PostDetailPageState extends State<PostDetailPage> {
-  bool isLiked = false;
   final TextEditingController commentController = TextEditingController();
-  final List<String> comments = [];
+  late Post _currentPost;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPost = widget.post;
+  }
 
   @override
   void dispose() {
@@ -21,30 +26,55 @@ class _PostDetailPageState extends State<PostDetailPage> {
     super.dispose();
   }
 
+  void _toggleLike() {
+    final wasLiked = _currentPost.liked;
+    // 화면에 즉시 반영하기 위해 setState 사용
+    setState(() {
+      _currentPost = _currentPost.copyWith(
+        liked: !wasLiked,
+        likeCount: wasLiked ? _currentPost.likeCount - 1 : _currentPost.likeCount + 1,
+      );
+    });
+    // 앱의 다른 개발자를 위해 전역 상태 업데이트는 그대로 둡니다.
+    context.app.toggleLike(widget.post.id);
+  }
+
+  void _toggleSave() {
+    final wasSaved = _currentPost.saved;
+    setState(() {
+      _currentPost = _currentPost.copyWith(saved: !wasSaved);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(!wasSaved ? '저장했어요' : '저장을 취소했어요')),
+    );
+    context.app.toggleSave(widget.post.id);
+  }
+
+  void _addComment() {
+    final text = commentController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      _currentPost = _currentPost.copyWith(
+        comments: [text, ..._currentPost.comments],
+        commentCount: _currentPost.commentCount + 1,
+      );
+    });
+    context.app.addComment(widget.post.id, text);
+    commentController.clear();
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final app = context.app;
-
-    // 항상 최신 상태의 Post를 전역 리스트에서 찾아서 사용
-    final Post current = app.posts.firstWhere(
-      (p) => p.id == widget.post.id,
-      orElse: () => widget.post,
-    );
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('게시물'),
         actions: [
           IconButton(
-            tooltip: current.saved ? '저장 취소' : '저장',
-            icon: Icon(current.saved ? Icons.bookmark : Icons.bookmark_border),
-            onPressed: () {
-              app.toggleSave(current.id); // 전역 상태 토글
-              setState(() {}); // 아이콘 갱신
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(current.saved ? '저장을 취소했어요' : '저장했어요')),
-              );
-            },
+            tooltip: _currentPost.saved ? '저장 취소' : '저장',
+            icon: Icon(_currentPost.saved ? Icons.bookmark : Icons.bookmark_border),
+            onPressed: _toggleSave,
           ),
         ],
       ),
@@ -52,69 +82,54 @@ class _PostDetailPageState extends State<PostDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 300, child: _buildGallery(current)),
+            SizedBox(height: 300, child: _buildGallery(_currentPost)),
             const SizedBox(height: 16),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                current.title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
+                _currentPost.title,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
-                current.description ?? '',
+                _currentPost.description ?? '',
                 style: const TextStyle(fontSize: 16, height: 1.4),
               ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(
-                '${current.createdAt.toLocal()} • ❤️ ${current.likeCount} • 💬 ${current.commentCount}',
+                '${_currentPost.createdAt.toLocal()} • ❤️ ${_currentPost.likeCount} • 💬 ${_currentPost.commentCount}',
                 style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ),
-
-            // 좋아요(데모)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   IconButton(
                     icon: Icon(
-                      isLiked ? Icons.favorite : Icons.favorite_border,
-                      color: isLiked ? Colors.red : Colors.grey,
+                      _currentPost.liked ? Icons.favorite : Icons.favorite_border,
+                      color: _currentPost.liked ? Colors.red : Colors.grey,
                     ),
-                    onPressed: () => setState(() => isLiked = !isLiked),
+                    onPressed: _toggleLike,
                   ),
                   const Text('좋아요'),
                 ],
               ),
             ),
-
-            // 댓글 리스트(데모)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: comments
-                    .map(
-                      (c) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text('💬 $c'),
-                      ),
-                    )
+                children: _currentPost.comments
+                    .map((c) => Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text('💬 $c')))
                     .toList(),
               ),
             ),
             const SizedBox(height: 20),
-
-            // 댓글 입력(데모)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -122,23 +137,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   Expanded(
                     child: TextField(
                       controller: commentController,
-                      decoration: const InputDecoration(
-                        hintText: '댓글을 입력하세요',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: const InputDecoration(hintText: '댓글을 입력하세요', border: OutlineInputBorder()),
                     ),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () {
-                      final t = commentController.text.trim();
-                      if (t.isNotEmpty) {
-                        setState(() {
-                          comments.add(t);
-                          commentController.clear();
-                        });
-                      }
-                    },
+                    onPressed: _addComment,
                     child: const Text('등록'),
                   ),
                 ],
@@ -176,7 +180,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
             filterQuality: FilterQuality.low,
             errorBuilder: (_, __, ___) => const Center(
               child: Icon(Icons.broken_image, size: 36, color: Colors.black26),
-            ),
+            )
           )
         : Image.asset(
             src,

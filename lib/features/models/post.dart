@@ -6,6 +6,8 @@ class Post {
   final int likeCount;
   final int commentCount;
   final bool saved;
+  final bool liked;
+  final List<String> comments;
 
   // 상세용
   final String? description;
@@ -22,9 +24,11 @@ class Post {
     required this.likeCount,
     required this.commentCount,
     this.saved = false,
+    this.liked = false,
+    this.comments = const [],
     this.description,
     this.images = const [],
-    this.isMine = false, // 기본은 내 글 아님
+    this.isMine = false,
   });
 
   Post copyWith({
@@ -35,6 +39,8 @@ class Post {
     int? likeCount,
     int? commentCount,
     bool? saved,
+    bool? liked,
+    List<String>? comments,
     String? description,
     List<String>? images,
     bool? isMine,
@@ -47,6 +53,8 @@ class Post {
       likeCount: likeCount ?? this.likeCount,
       commentCount: commentCount ?? this.commentCount,
       saved: saved ?? this.saved,
+      liked: liked ?? this.liked,
+      comments: comments ?? this.comments,
       description: description ?? this.description,
       images: images ?? this.images,
       isMine: isMine ?? this.isMine,

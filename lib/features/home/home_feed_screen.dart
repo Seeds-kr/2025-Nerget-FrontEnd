@@ -1,110 +1,158 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import '../../router/app_router.dart';
+import 'package:omakase_app/features/models/post.dart';
+import 'package:omakase_app/router/app_router.dart';
 
-class HomeFeedScreen extends StatelessWidget {
-  final int initialTabIndex;
+/// HomeShell의 홈 피드 화면 (새 디자인 적용)
+/// - 상단 "Recommended style" 타이틀 (검색 없음)
+/// - 2열(소형)/3열(대형) 1:1 카드, 라운드 12
+/// - 무한 스크롤 + 당겨서 새로고침
+class HomeFeedScreen extends StatefulWidget {
+  final int initialTabIndex; // 기존 시그니처 유지
   const HomeFeedScreen({super.key, this.initialTabIndex = 0});
 
-  Future<void> _signOut(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    if (!context.mounted) return;
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final safeIndex = initialTabIndex.clamp(0, 2);
-    return DefaultTabController(
-      length: 3,
-      initialIndex: safeIndex,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Home'),
-          actions: [
-            IconButton(
-              onPressed: () => _signOut(context),
-              icon: const Icon(Icons.logout),
-              tooltip: '로그아웃',
-            ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(44),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TabBar(
-                isScrollable: true,
-                labelPadding: const EdgeInsets.symmetric(horizontal: 20),
-                labelColor: theme.colorScheme.onSurface,
-                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-                indicator: UnderlineTabIndicator(
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                    width: 3,
-                  ),
-                  insets: const EdgeInsets.symmetric(horizontal: 18),
-                ),
-                tabs: const [
-                  Tab(text: 'Following'),
-                  Tab(text: 'For you'),
-                  Tab(text: 'Favorites'),
-                ],
-              ),
-            ),
-          ),
-        ),
-        body: const TabBarView(
-          children: [
-            _FeedMasonryGrid(),
-            _FeedMasonryGrid(),
-            _FeedMasonryGrid(),
-          ],
-        ),
-      ),
-    );
-  }
+  State<HomeFeedScreen> createState() => _HomeFeedScreenState();
 }
 
-class _FeedMasonryGrid extends StatelessWidget {
-  const _FeedMasonryGrid();
+class _HomeFeedScreenState extends State<HomeFeedScreen> {
+  final _scroll = ScrollController();
+  final List<String> _images = [];
+  bool _loading = false;
+  bool _hasMore = true;
+  int _page = 0;
 
-  List<String> _buildImagePaths() {
-    return List<String>.generate(
-      20,
-      (index) => 'assets/feed_style${index + 1}.jpg',
-    );
+  @override
+  void initState() {
+    super.initState();
+    _loadMore();
+    _scroll.addListener(() {
+      if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 300) {
+        _loadMore();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    _page = 0;
+    _images.clear();
+    _hasMore = true;
+    setState(() {});
+    await _loadMore();
+  }
+
+  Future<void> _loadMore() async {
+    if (_loading || !_hasMore) return;
+    setState(() => _loading = true);
+    try {
+      // TODO: 여기서 AWS/API 연동으로 교체
+      await Future.delayed(const Duration(milliseconds: 250));
+      final newUrls = List.generate(
+        30,
+            (i) => 'https://picsum.photos/seed/reco_${_page}_$i/900/900',
+      );
+      _images.addAll(newUrls);
+      _hasMore = newUrls.isNotEmpty;
+      _page++;
+      if (mounted) setState(() {});
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final images = _buildImagePaths();
-    final width = MediaQuery.of(context).size.width;
-    final crossAxisCount = width >= 480 ? 4 : 3;
-    final aspectRatios = <double>[0.72, 0.85, 1.10, 0.95, 1.25];
+    const black = Color(0xFF111111);
+    const divider = Color(0xFFEAEAEA);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: MasonryGridView.count(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        itemCount: images.length,
-        itemBuilder: (context, index) {
-          final path = images[index];
-          final ratio = aspectRatios[index % aspectRatios.length];
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: AspectRatio(
-              aspectRatio: ratio,
-              child: Image.asset(path, fit: BoxFit.cover),
-            ),
-          );
-        },
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        centerTitle: false,
+        title: const Text('Recommended style',
+            style: TextStyle(color: black, fontWeight: FontWeight.w800)),
+      ),
+      body: RefreshIndicator(
+        color: black,
+        onRefresh: _refresh,
+        child: LayoutBuilder(
+          builder: (context, c) {
+            final cross = c.maxWidth >= 400 ? 3 : 2;
+            return CustomScrollView(
+              controller: _scroll,
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  sliver: SliverGrid.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cross,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 1,
+                    ),
+                    itemCount: _images.length,
+                    itemBuilder: (_, i) {
+                      final post = Post(
+                        id: i,
+                        title: 'Recommended Post $i',
+                        imageUrl: _images[i],
+                        createdAt: DateTime.now(),
+                        likeCount: i * 3,
+                        commentCount: i,
+                        images: [_images[i]],
+                        description: 'This is a recommended post #$i',
+                      );
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(context, AppRoutes.post, arguments: post);
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            _images[i],
+                            fit: BoxFit.cover,
+                            frameBuilder: (context, child, frame, wasSync) {
+                              if (wasSync || frame != null) return child;
+                              return AnimatedOpacity(
+                                opacity: frame == null ? 0 : 1,
+                                duration: const Duration(milliseconds: 180),
+                                child: child,
+                              );
+                            },
+                            errorBuilder: (_, __, ___) => Container(
+                              color: const Color(0xFFF5F5F5),
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.image_not_supported, color: black),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _loading
+                      ? const Padding(
+                          padding: EdgeInsets.only(bottom: 24),
+                          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        )
+                      : const SizedBox(height: 24),
+                ),
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 24),
+                    child: Divider(height: 1, color: divider),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

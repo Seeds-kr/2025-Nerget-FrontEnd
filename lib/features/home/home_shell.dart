@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:omakase_app/router/app_router.dart';
 import '../home/home_feed_screen.dart';
 import '../community/community_screen.dart';
-import '../upload/upload_style_screen.dart';
 import '../saved/saved_screen.dart';
 import '../mypage/mypage_screen.dart';
 
 class HomeShell extends StatefulWidget {
   final int initialIndex;
   final int feedInitialTabIndex;
+
   const HomeShell({
     super.key,
     this.initialIndex = 0,
@@ -21,76 +22,78 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   late int _index = widget.initialIndex;
 
-  List<Widget> get _tabs => <Widget>[
-    HomeFeedScreen(initialTabIndex: widget.feedInitialTabIndex),
-    const CommunityPage(),
-    const UploadStyleScreen(),
-    const SavedScreen(),
-    const MyPage(),
+  // Upload screen is removed from the list of tabs
+  final List<Widget> _tabs = <Widget>[
+    HomeFeedScreen(initialTabIndex: 0), // index 0
+    const CommunityPage(), // index 1
+    const SavedScreen(), // index 2
+    const MyPage(), // index 3
   ];
+
+  void _onItemTapped(int i) {
+    if (_index == i) return;
+    setState(() => _index = i);
+  }
+
+  Widget _buildNavItem(IconData unselectedIcon, IconData selectedIcon, String label, int index) {
+    final isSelected = _index == index;
+    final color = isSelected ? Colors.black : Colors.grey.shade600;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onItemTapped(index),
+        behavior: HitTestBehavior.translucent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(isSelected ? selectedIcon : unselectedIcon, color: color),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final divider = Divider(
-      height: 1,
-      thickness: 1,
-      color: const Color.fromRGBO(0, 0, 0, 0.06),
-    );
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          divider,
-          NavigationBar(
-            backgroundColor: Colors.white,
-            indicatorColor: Colors.transparent,
-            selectedIndex: _index,
-            onDestinationSelected: (i) {
-              setState(() => _index = i);
-              // URL 동기화 (웹에서 주소 해시 변경)
-              switch (i) {
-                case 0:
-                  Navigator.of(context).pushReplacementNamed('/feed');
-                  break;
-                case 1:
-                  Navigator.of(context).pushReplacementNamed('/community');
-                  break;
-                case 2:
-                  Navigator.of(context).pushReplacementNamed('/upload');
-                  break;
-                case 3:
-                  Navigator.of(context).pushReplacementNamed('/saved');
-                  break;
-                case 4:
-                  Navigator.of(context).pushReplacementNamed('/mypage');
-                  break;
-              }
-            },
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                label: 'home',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.people_outline),
-                label: 'community',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.add_circle_outline),
-                label: 'upload',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.bookmark_outline),
-                label: 'saved',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline),
-                label: 'mypage',
-              ),
-            ],
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        // Navigate to the Upload screen
+        onPressed: () {
+          Navigator.of(context).pushNamed(AppRoutes.upload);
+        },
+        backgroundColor: Colors.black,
+        shape: const CircleBorder(),
+        elevation: 2.0,
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 6.0,
+        color: Colors.white,
+        elevation: 8.0,
+        surfaceTintColor: Colors.white,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            _buildNavItem(Icons.home_outlined, Icons.home, 'Home', 0),
+            _buildNavItem(Icons.people_outline, Icons.people, 'Community', 1),
+            const Expanded(child: SizedBox()), // The space for the notch
+            // Adjust indices for Saved and MyPage
+            _buildNavItem(Icons.bookmark_outline, Icons.bookmark, 'Saved', 2),
+            _buildNavItem(Icons.person_outline, Icons.person, 'MyPage', 3),
+          ],
+        ),
       ),
     );
   }

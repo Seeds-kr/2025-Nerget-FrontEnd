@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:omakase_app/features/models/post.dart';
+import 'package:omakase_app/router/app_router.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -8,167 +10,168 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
-  // 프로필/통계
-  final Map<String, dynamic> profile = {
-    'name': 'helena',
-    'username': '@helena',
-    'bio': 'Hi! I’m helena😉\nWelcome to my page.',
-    'followers': 57,
-    'following': 57,
-  };
+  final List<String> _myPosts = List.generate(
+    18, (i) => 'https://picsum.photos/seed/me_$i/900/900',
+  ); // TODO: API 연동 시 교체
 
-  // 샘플 게시물(assets 등록 필요)
-  final List<String> posts = [
-    'assets/style1.jpg',
-    'assets/style2.jpg',
-    'assets/style3.jpg',
-    'assets/style4.jpg',
-    'assets/style5.jpg',
-    'assets/style6.jpg',
-    'assets/style7.jpg',
-    'assets/style8.jpg',
-  ];
+  Widget _buildStatColumn(String value, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Posts 개수는 리스트 길이로 계산
-    final int postCount = posts.length;
+    const black = Color(0xFF111111);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // TODO: 설정 페이지로 이동
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          const SizedBox(height: 16),
-          _buildHeader(),
-          const SizedBox(height: 12),
-          _buildStats(postCount),
-          const SizedBox(height: 8),
-          _buildBio(),
-          const SizedBox(height: 8),
-          const Divider(height: 1),
-          // 게시물 영역
-          Expanded(child: postCount == 0 ? _buildEmpty() : _buildGrid()),
-        ],
-      ),
-      // ❌ BottomNavigationBar 제거 (상위 Scaffold에서만 관리)
-    );
-  }
-
-  // ───────────────── Header: 아바타 + 이름/아이디
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const CircleAvatar(
-            radius: 28,
-            backgroundImage: AssetImage('assets/style1.jpg'),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                profile['name'],
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+      body: NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
+            SliverAppBar(
+              title: const Text('옷마카세', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              centerTitle: true,
+              floating: true,
+              snap: true,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  children: [
+                    const CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Color(0xFFEAEAEA),
+                      child: Icon(Icons.person, size: 40, color: black),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '@otmakase_user',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Finding minimal, clean looks daily.',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('프로필 편집 준비 중')));
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: black,
+                          side: const BorderSide(color: Color(0xFFDDDDDD)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Edit Profile'),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatColumn('120', 'Posts'),
+                        _buildStatColumn('2.4K', 'Followers'),
+                        _buildStatColumn('320', 'Following'),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                  ],
                 ),
               ),
-              Text(
-                profile['username'],
-                style: const TextStyle(color: Colors.grey),
-              ),
-            ],
+            ),
+          ];
+        },
+        body: _PostList(items: _myPosts),
+      ),
+    );
+  }
+}
+
+class _PostList extends StatelessWidget {
+  final List<String> items;
+  const _PostList({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return const _Empty();
+    }
+    return LayoutBuilder(
+      builder: (context, c) {
+        final cross = c.maxWidth >= 400 ? 3 : 2;
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cross,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 1,
           ),
-        ],
-      ),
-    );
-  }
-
-  // ───────────────── 통계: Posts / Followers / Following
-  Widget _buildStats(int postsCount) {
-    Widget item(String label, int value) => Column(
-      children: [
-        Text(
-          '$value',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.grey)),
-      ],
-    );
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          item('Posts', postsCount),
-          item('Followers', profile['followers'] as int),
-          item('Following', profile['following'] as int),
-        ],
-      ),
-    );
-  }
-
-  // ───────────────── Bio
-  Widget _buildBio() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Text(
-        profile['bio'],
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 14),
-      ),
-    );
-  }
-
-  // ───────────────── 게시물 없음
-  Widget _buildEmpty() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.circle_outlined, size: 96),
-          SizedBox(height: 12),
-          Text('No Post', style: TextStyle(fontSize: 16)),
-        ],
-      ),
-    );
-  }
-
-  // ───────────────── 그리드(3열)
-  Widget _buildGrid() {
-    return GridView.builder(
-      padding: EdgeInsets.zero,
-      itemCount: posts.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 2,
-        crossAxisSpacing: 2,
-      ),
-      itemBuilder: (context, index) {
-        return Image.asset(
-          posts[index],
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // If an asset is missing or fails to load, show a neutral box
-            return Container(color: Colors.grey[300]);
+          itemCount: items.length,
+          itemBuilder: (_, i) {
+            final post = Post(
+              id: i,
+              title: 'My Post $i',
+              imageUrl: items[i],
+              createdAt: DateTime.now(),
+              likeCount: i * 10,
+              commentCount: i * 2,
+              images: [items[i]],
+              description: 'This is the description for post $i',
+            );
+            return GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.post, arguments: post);
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(items[i], fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[200])),
+              ),
+            );
           },
         );
       },
+    );
+  }
+}
+
+class _Empty extends StatelessWidget {
+  const _Empty();
+  @override
+  Widget build(BuildContext context) {
+    const black54 = Color(0x8A000000);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.image_outlined, size: 48, color: black54),
+          SizedBox(height: 8),
+          Text('아직 콘텐츠가 없어요', style: TextStyle(fontWeight: FontWeight.w700)),
+          SizedBox(height: 4),
+          Text('업로드하거나 저장해 보세요', style: TextStyle(color: black54)),
+        ],
+      ),
     );
   }
 }
